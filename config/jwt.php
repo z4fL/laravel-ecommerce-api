@@ -89,7 +89,7 @@ return [
     |
     */
 
-    'ttl' => (int) env('JWT_TTL', 60),
+    'ttl' => ($ttl = env('JWT_TTL', 60)) === null ? null : (int) $ttl,
 
     /*
     |--------------------------------------------------------------------------
@@ -118,7 +118,7 @@ return [
     */
 
     'refresh_iat' => env('JWT_REFRESH_IAT', false),
-    'refresh_ttl' => (int) env('JWT_REFRESH_TTL', 20160),
+    'refresh_ttl' => ($refreshTtl = env('JWT_REFRESH_TTL', 20160)) === null ? null : (int) $refreshTtl,
 
     /*
     |--------------------------------------------------------------------------
