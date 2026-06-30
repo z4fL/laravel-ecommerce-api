@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests;
 
-// use Illuminate\Contracts\Validation\ValidationRule;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class RegisterRequest extends FormRequest
@@ -25,7 +25,7 @@ class RegisterRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:50'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
-            'password' => ['required', 'min:5', 'confirmed'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
         ];
     }
 }

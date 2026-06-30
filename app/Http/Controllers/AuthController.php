@@ -88,7 +88,15 @@ class AuthController extends Controller
 
     public function refresh(): JsonResponse
     {
-        $token = auth('api')->refresh();
+
+        try {
+            $token = auth('api')->refresh();
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Token refresh failed.',
+            ], 401);
+        }
 
         return response()->json([
             'success' => true,
