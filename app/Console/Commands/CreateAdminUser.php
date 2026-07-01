@@ -23,10 +23,10 @@ class CreateAdminUser extends Command
         $this->newLine();
 
         $name = $this->ask('Name: ', 'admin');
-        $email = $this->ask('Email: ', 'admin@admin.com');
+        $email = $this->ask('Email: ', 'zaaaafl654@gmail.com');
 
-        $password = $this->secret('Password', 'password');
-        $passwordConfirmation = $this->secret('Confirm Password', 'password');
+        $password = $this->secret('Password'); // default = password
+        $passwordConfirmation = $this->secret('Confirm Password');
 
         $validator = Validator::make([
             'name' => $name,
