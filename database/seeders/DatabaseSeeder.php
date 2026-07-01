@@ -17,13 +17,17 @@ class DatabaseSeeder extends Seeder
     {
         User::factory()->create([
             'name' => fake()->name(),
+            'username' => fake()->unique()->userName(),
             'email' => 'fadlidzaky3@gmail.com',
+            'phone' => fake('id_ID')->e164PhoneNumber(),
             'role' => 'seller',
         ]);
 
         User::factory()->create([
             'name' => fake()->name(),
+            'username' => fake()->unique()->userName(),
             'email' => 'zzzakc15@gmail.com',
+            'phone' => fake('id_ID')->e164PhoneNumber(),
             'role' => 'customer',
         ]);
     }
