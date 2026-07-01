@@ -72,22 +72,6 @@ class AuthController extends Controller
         ], 200);
     }
 
-    public function me(): JsonResponse
-    {
-        $user = auth('api')->user();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Authenticated user retrieved successfully.',
-            'data' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'created_at' => $user->created_at,
-            ],
-        ], 200);
-    }
-
     public function refresh(): JsonResponse
     {
 
