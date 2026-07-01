@@ -25,9 +25,9 @@ class UpdateProfileRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:50'],
+            'name' => ['sometimes', 'string', 'max:50'],
             'username' => [
-                'required',
+                'sometimes',
                 'string',
                 'min:3',
                 'max:50',
@@ -35,6 +35,7 @@ class UpdateProfileRequest extends FormRequest
                 Rule::unique('users')->ignore($this->user()),
             ],
             'phone' => [
+                'sometimes',
                 'nullable',
                 'string',
                 'max:20',

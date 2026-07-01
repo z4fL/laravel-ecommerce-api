@@ -4,18 +4,17 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\UpdateProfileRequest;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class ProfileController extends Controller
 {
-    public function show(Request $request): JsonResponse
+    public function show(): JsonResponse
     {
         $user = auth('api')->user();
 
         return response()->json([
             'success' => true,
             'message' => 'Profile retrieved successfully.',
-            'data' => $request->user(),
+            'data' => $user,
         ], 200);
     }
 
