@@ -22,20 +22,26 @@ class CreateAdminUser extends Command
         $this->info('=== Create Admin Account ===');
         $this->newLine();
 
-        $name = $this->ask('Name: ', 'admin');
-        $email = $this->ask('Email: ', 'zaaaafl654@gmail.com');
+        $name = $this->ask('Name', 'Administrator');
+        $username = $this->ask('Username', 'admin');
+        $email = $this->ask('Email', 'zaaaafl654@gmail.com');
+        $phone = $this->ask('Phone', '+1234567890');
 
         $password = $this->secret('Password'); // default = password
         $passwordConfirmation = $this->secret('Confirm Password');
 
         $validator = Validator::make([
             'name' => $name,
+            'username' => $username,
             'email' => $email,
+            'phone' => $phone,
             'password' => $password,
             'password_confirmation' => $passwordConfirmation,
         ], [
             'name' => ['required', 'string', 'max:255'],
+            'username' => ['required', 'string', 'max:255', 'unique:users,username'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+            'phone' => ['required', 'string', 'max:20'],
             'password' => ['required', 'confirmed', 'min:8'],
         ]);
 
@@ -58,7 +64,9 @@ class CreateAdminUser extends Command
 
         User::create([
             'name' => $name,
+            'username' => $username,
             'email' => $email,
+            'phone' => $phone,
             'password' => Hash::make($password),
             'role' => UserRole::ADMIN,
         ]);
