@@ -79,12 +79,16 @@ trait ApiResponse
 
     protected function error(
         string $message,
-        int $status = 400
+        int $status = 400,
+        array $errors = []
     ): JsonResponse {
         return $this->respond(
             success: false,
             message: $message,
             status: $status,
+            extra: $errors ? [
+                'errors' => $errors
+            ] : []
         );
     }
 }
