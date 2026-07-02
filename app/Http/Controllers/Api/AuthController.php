@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Controller;
 use App\Enum\UserRole;
 use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
@@ -24,21 +25,17 @@ class AuthController extends Controller
 
         $token = auth('api')->login($user);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Register successful.',
-            'data' => [
-                'user' => [
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'created_at' => $user->created_at,
-                ],
-                'access_token' => $token,
-                'token_type' => 'Bearer',
-                'expires_in' => auth('api')->factory()->getTTL() * 60,
+        return $this->created('User', [
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'created_at' => $user->created_at,
             ],
-        ], 201);
+            'access_token' => $token,
+            'token_type' => 'Bearer',
+            'expires_in' => auth('api')->factory()->getTTL() * 60,
+        ]);
     }
 
     public function login(LoginRequest $request): JsonResponse
@@ -47,18 +44,16 @@ class AuthController extends Controller
         $token = auth('api')->attempt($credentials);
 
         if (!$token) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Invalid email or password.',
-            ], 401);
+            return $this->error(
+                'Invalid email or password.',
+                401
+            );
         }
 
         $user = auth('api')->user();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Login successful.',
-            'data' => [
+        return $this->success(
+            [
                 'user' => [
                     'id' => $user->id,
                     'name' => $user->name,
@@ -69,39 +64,29 @@ class AuthController extends Controller
                 'token_type' => 'Bearer',
                 'expires_in' => auth('api')->factory()->getTTL() * 60,
             ],
-        ], 200);
+            'Login successful.'
+        );
     }
 
     public function refresh(): JsonResponse
     {
 
-        try {
-            $token = auth('api')->refresh();
-        } catch (\Throwable $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Token refresh failed.',
-            ], 401);
-        }
+        $token = auth('api')->refresh();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Token refreshed successfully.',
-            'data' => [
+        return $this->success(
+            [
                 'access_token' => $token,
                 'token_type' => 'Bearer',
                 'expires_in' => auth('api')->factory()->getTTL() * 60,
             ],
-        ], 200);
+            'Token refreshed successfully.'
+        );
     }
 
     public function logout(): JsonResponse
     {
         auth('api')->logout();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Logout successful.',
-        ], 200);
+        return $this->success(message: 'Logout successful.');
     }
 }
