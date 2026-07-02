@@ -42,7 +42,7 @@ trait ApiResponse
         mixed $data = null,
         ?string $message = null,
     ): JsonResponse {
-        $message ??= sprintf(self::UPDATED_MESSAGE, $resource);
+        $message ??= sprintf(self::CREATED_MESSAGE, $resource);
         return $this->respond(
             success: true,
             message: $message,
