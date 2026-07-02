@@ -141,7 +141,8 @@ class AuthController extends Controller
                     type: 'object'
                 )
             )
-        ]
+        ],
+        security: []
     )]
     public function register(RegisterRequest $request): JsonResponse
     {

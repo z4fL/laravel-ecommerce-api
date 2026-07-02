@@ -6,7 +6,7 @@ use OpenApi\Attributes as OA;
 
 #[OA\Info(
     version: '1.0.0',
-    title: 'REST API E Commerce',
+    title: 'REST API E-commerce',
     description: 'REST API for E Commerce Portfolio Project'
 )]
 #[OA\Server(
