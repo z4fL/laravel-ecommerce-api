@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateProfileRequest;
 use Illuminate\Http\JsonResponse;
 
@@ -11,11 +12,7 @@ class ProfileController extends Controller
     {
         $user = auth('api')->user();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Profile retrieved successfully.',
-            'data' => $user,
-        ], 200);
+        return $this->success($user);
     }
 
     public function update(UpdateProfileRequest $request): JsonResponse
@@ -27,10 +24,6 @@ class ProfileController extends Controller
         $user->fill($validated);
         $user->save();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Profile updated successfully.',
-            'data' => $user->fresh(),
-        ]);
+        return $this->updated('User', $user->fresh());
     }
 }
