@@ -25,7 +25,8 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $handler = new ApiExceptionHandler();
         $exceptions->render(
-            fn(Throwable $exception, Request $request)
-            => $handler->handle($exception)
+            fn(Throwable $exception, Request $request) => $request->is('api/*')
+                ? $handler->handle($exception)
+                : null
         );
     })->create();

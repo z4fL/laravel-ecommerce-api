@@ -3,7 +3,6 @@
 namespace App\Exceptions;
 
 use App\Traits\ApiResponse;
-use Exception;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
@@ -16,7 +15,7 @@ use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Throwable;
 
-class ApiExceptionHandler extends Exception
+class ApiExceptionHandler
 {
     use ApiResponse;
 
@@ -138,7 +137,7 @@ class ApiExceptionHandler extends Exception
     private function tokenMissing(): JsonResponse
     {
         return $this->error(
-            message: 'Token missing.',
+            message: 'Authentication token error.',
             status: 401,
         );
     }
