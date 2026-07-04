@@ -5,7 +5,7 @@
 A production inspired RESTful API built with Laravel for learning, backend portfolio, and software engineering best practices.
 
 ![Laravel](https://img.shields.io/badge/Laravel-13-FF2D20?style=for-the-badge&logo=laravel&logoColor=white)
-![PHP](https://img.shields.io/badge/PHP-8.5+-777BB4?style=for-the-badge&logo=php&logoColor=white)
+![PHP](https://img.shields.io/badge/PHP-8.3+-777BB4?style=for-the-badge&logo=php&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Database-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
 ![JWT](https://img.shields.io/badge/JWT-Authentication-000000?style=for-the-badge&logo=jsonwebtokens&logoColor=white)
 ![Swagger](https://img.shields.io/badge/Swagger-OpenAPI-85EA2D?style=for-the-badge&logo=swagger&logoColor=black)
@@ -48,7 +48,7 @@ Current and planned features include:
 | Technology | Description |
 |------------|-------------|
 | Laravel 13 | PHP Framework |
-| PHP 8.5+ | Programming Language |
+| PHP | Programming Language |
 | PostgreSQL | Primary Database |
 | JWT | Authentication |
 | Swagger / OpenAPI | API Documentation |
