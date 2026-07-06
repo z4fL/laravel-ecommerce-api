@@ -17,13 +17,41 @@ class Category extends Model
     protected static function booted(): void
     {
         static::creating(function (Category $category) {
-            $category->slug = Str::slug($category->name);
+            $category->slug = self::generateUniqueSlug($category->name);
         });
 
         static::updating(function (Category $category) {
             if ($category->isDirty('name')) {
-                $category->slug = Str::slug($category->name);
+                $category->slug = self::generateUniqueSlug(
+                    $category->name,
+                    $category->id
+                );
             }
         });
+    }
+
+    /**
+     * Generate a unique slug.
+     */
+    private static function generateUniqueSlug(string $name, ?int $ignoreId = null): string
+    {
+        $baseSlug = Str::slug($name);
+        $slug = $baseSlug;
+        $counter = 2;
+
+        while (
+            self::query()
+            ->where('slug', $slug)
+            ->when(
+                $ignoreId,
+                fn($query) => $query->whereKeyNot($ignoreId)
+            )
+            ->exists()
+        ) {
+            $slug = "{$baseSlug}-{$counter}";
+            $counter++;
+        }
+
+        return $slug;
     }
 }
