@@ -30,5 +30,9 @@ class DatabaseSeeder extends Seeder
             'phone' => fake('id_ID')->e164PhoneNumber(),
             'role' => 'customer',
         ]);
+
+        $this->call([
+            CategorySeeder::class
+        ]);
     }
 }

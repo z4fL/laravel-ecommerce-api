@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\ProfileController;
 use Illuminate\Support\Facades\Route;
 
@@ -16,26 +17,16 @@ Route::prefix('auth')->group(function () {
     });
 });
 
-// Protected Routes
+// Profile
 Route::middleware('auth:api')->group(function () {
     Route::get('/me', [ProfileController::class, 'show']);
     Route::patch('/me', [ProfileController::class, 'update']);
-
-    Route::middleware('role:admin')->group(function () {
-        Route::get('/admin/test', fn() => response()->json([
-            'message' => 'Admin access granted.',
-        ]));
-    });
-
-    Route::middleware('role:seller')->group(function () {
-        Route::get('/seller/test', fn() => response()->json([
-            'message' => 'Seller access granted.',
-        ]));
-    });
-
-    Route::middleware('role:customer')->group(function () {
-        Route::get('/customer/test', fn() => response()->json([
-            'message' => 'Customer access granted.',
-        ]));
-    });
 });
+
+// Categories
+Route::apiResource('categories', CategoryController::class)
+    ->only(['index', 'show']);
+
+Route::apiResource('categories', CategoryController::class)
+    ->except(['index', 'show'])
+    ->middleware(['auth:api', 'role:admin']);
