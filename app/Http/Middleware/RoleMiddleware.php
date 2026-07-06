@@ -4,6 +4,8 @@ namespace App\Http\Middleware;
 
 use App\Enum\UserRole;
 use Closure;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -19,7 +21,7 @@ class RoleMiddleware
         $user = $request->user();
 
         if (! $user) {
-            abort(Response::HTTP_UNAUTHORIZED, 'Unauthenticated.');
+            throw new AuthenticationException();
         }
 
         foreach ($roles as $role) {
@@ -28,6 +30,6 @@ class RoleMiddleware
             }
         }
 
-        abort(Response::HTTP_FORBIDDEN, 'Forbidden.');
+        throw new AuthorizationException();
     }
 }

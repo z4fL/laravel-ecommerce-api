@@ -35,11 +35,11 @@ class ApiExceptionHandler
             $exception instanceof AuthenticationException
             => $this->unauthenticated(),
 
-            // Authorization
+            // Authorization from AuthorizationException()
             $exception instanceof AccessDeniedHttpException
             => $this->forbidden(),
 
-            // Eloquent
+            // Eloquent from ModelNotFoundException()
             $exception instanceof NotFoundHttpException &&
                 $exception->getPrevious() instanceof ModelNotFoundException
             => $this->modelNotFound(),
