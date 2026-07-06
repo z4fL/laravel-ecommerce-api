@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\ProfileController;
+use App\Http\Controllers\Api\TagController;
 use Illuminate\Support\Facades\Route;
 
 // Authentication
@@ -28,5 +29,13 @@ Route::apiResource('categories', CategoryController::class)
     ->only(['index', 'show']);
 
 Route::apiResource('categories', CategoryController::class)
+    ->except(['index', 'show'])
+    ->middleware(['auth:api', 'role:admin']);
+
+// Tags
+Route::apiResource('tags', TagController::class)
+    ->only(['index', 'show']);
+
+Route::apiResource('tags', TagController::class)
     ->except(['index', 'show'])
     ->middleware(['auth:api', 'role:admin']);
