@@ -13,21 +13,18 @@ class TagSeeder extends Seeder
     public function run(): void
     {
         $tags = [
-            [
-                'name' => 'New Arrival',
-            ],
-            [
-                'name' => 'Best Seller',
-            ],
-            [
-                'name' => 'Featured',
-            ],
-            [
-                'name' => 'Limited Edition',
-            ],
-            [
-                'name' => 'Discount',
-            ],
+            ['name' => 'Gaming'],
+            ['name' => 'Wireless'],
+            ['name' => 'RGB'],
+            ['name' => 'Mechanical'],
+            ['name' => 'Bluetooth'],
+            ['name' => 'Programming'],
+            ['name' => 'Bestseller'],
+            ['name' => 'Casual'],
+            ['name' => 'Cotton'],
+            ['name' => 'Waterproof'],
+            ['name' => 'Portable'],
+            ['name' => 'Ergonomic'],
         ];
 
         foreach ($tags as $tag) {

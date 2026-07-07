@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\TagController;
 use Illuminate\Support\Facades\Route;
@@ -39,3 +40,11 @@ Route::apiResource('tags', TagController::class)
 Route::apiResource('tags', TagController::class)
     ->except(['index', 'show'])
     ->middleware(['auth:api', 'role:admin']);
+
+// Product
+Route::apiResource('products', ProductController::class)
+    ->only(['index', 'show']);
+
+Route::apiResource('products', ProductController::class)
+    ->except(['index', 'show'])
+    ->middleware(['auth:api', 'role:seller']);
