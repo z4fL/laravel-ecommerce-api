@@ -15,15 +15,23 @@ class CategorySeeder extends Seeder
         $categories = [
             [
                 'name' => 'Electronics',
-                'description' => 'Electronic devices and gadgets including computers, smartphones, and accessories.',
+                'description' => 'Gadgets, devices, and electronic accessories.'
+            ],
+            [
+                'name' => 'Books',
+                'description' => 'Printed and digital books across all genres.'
             ],
             [
                 'name' => 'Fashion',
-                'description' => 'Clothing, footwear, bags, and fashion accessories for men and women.',
+                'description' => 'Clothing, footwear, and fashion accessories.'
             ],
             [
-                'name' => 'Home & Living',
-                'description' => 'Furniture, home decoration, kitchen appliances, and household essentials.',
+                'name' => 'Home & Kitchen',
+                'description' => 'Essentials for home improvement, cooking, and dining.'
+            ],
+            [
+                'name' => 'Sports',
+                'description' => 'Gear and equipment for fitness and outdoor activities.'
             ],
         ];
 
