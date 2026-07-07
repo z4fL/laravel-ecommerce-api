@@ -33,7 +33,7 @@ class ProductController extends Controller
                 ...$request->safe()->except('tag_ids')
             ]);
 
-            $product->tags()->sync($validated['tag_ids'] ?? []);
+            $product->tags()->sync($request->validated('tag_ids', []));
 
             return $product;
         });

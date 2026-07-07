@@ -23,48 +23,48 @@ class UpdateProductRequest extends FormRequest
      * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
-{
-    return [
-        'category_id' => [
-            'sometimes',
-            'integer',
-            Rule::exists('categories', 'id'),
-        ],
-        'sku' => [
-            'sometimes',
-            'string',
-            'max:50',
-            Rule::unique('products')->ignore($this->route('product')),
-        ],
-        'name' => [
-            'sometimes',
-            'string',
-            'min:3',
-            'max:150',
-        ],
-        'description' => [
-            'nullable',
-            'string',
-            'min:10',
-            'max:1000',
-        ],
-        'price' => [
-            'sometimes',
-            'integer',
-            'min:0',
-        ],
-        'status' => [
-            'sometimes',
-            Rule::enum(ProductStatus::class),
-        ],
-        'tag_ids' => [
-            'sometimes',
-            'array',
-        ],
-        'tag_ids.*' => [
-            'integer',
-            Rule::exists('tags', 'id'),
-        ],
-    ];
-}
+    {
+        return [
+            'category_id' => [
+                'sometimes',
+                'integer',
+                Rule::exists('categories', 'id'),
+            ],
+            'sku' => [
+                'sometimes',
+                'string',
+                'max:50',
+                Rule::unique('products')->ignore($this->route('product')),
+            ],
+            'name' => [
+                'sometimes',
+                'string',
+                'min:3',
+                'max:150',
+            ],
+            'description' => [
+                'nullable',
+                'string',
+                'min:10',
+                'max:1000',
+            ],
+            'price' => [
+                'sometimes',
+                'integer',
+                'min:0',
+            ],
+            'status' => [
+                'sometimes',
+                Rule::enum(ProductStatus::class),
+            ],
+            'tag_ids' => [
+                'sometimes',
+                'array',
+            ],
+            'tag_ids.*' => [
+                'integer',
+                Rule::exists('tags', 'id'),
+            ],
+        ];
+    }
 }
