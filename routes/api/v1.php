@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\Api\ProductImageController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\TagController;
 use Illuminate\Support\Facades\Route;
@@ -47,4 +48,7 @@ Route::apiResource('products', ProductController::class)
 
 Route::apiResource('products', ProductController::class)
     ->except(['index', 'show'])
+    ->middleware(['auth:api', 'role:seller']);
+
+Route::post('/products/{product}/images', [ProductImageController::class, 'store'])
     ->middleware(['auth:api', 'role:seller']);
