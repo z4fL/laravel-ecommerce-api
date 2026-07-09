@@ -49,9 +49,15 @@ class Product extends Model
         return $this->hasMany(ProductImage::class);
     }
 
-    public function primaryImage(): HasOne
+    public function reorderImages(): void
     {
-        return $this->hasOne(ProductImage::class)
-            ->where('is_primary', true);
+        $this->images()
+            ->orderBy('sort_order')
+            ->get()
+            ->each(function ($image, $index) {
+                $image->update([
+                    'sort_order' => $index + 1,
+                ]);
+            });
     }
 }

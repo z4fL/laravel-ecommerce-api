@@ -15,7 +15,6 @@ return new class extends Migration
             $table->id();
             $table->foreignId('product_id')->constrained()->onDelete('cascade');
             $table->string('path');
-            $table->boolean('is_primary')->default(false);
             $table->unsignedTinyInteger('sort_order')->default(0);
             $table->timestamps();
         });

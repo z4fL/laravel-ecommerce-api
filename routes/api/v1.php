@@ -45,10 +45,14 @@ Route::apiResource('tags', TagController::class)
 // Product
 Route::apiResource('products', ProductController::class)
     ->only(['index', 'show']);
+Route::get('/products/{product}/images', [ProductImageController::class, 'index']);
 
-Route::apiResource('products', ProductController::class)
-    ->except(['index', 'show'])
-    ->middleware(['auth:api', 'role:seller']);
+Route::middleware(['auth:api', 'role:seller'])->group(function () {
+    Route::apiResource('products', ProductController::class)
+        ->except(['index', 'show']);
 
-Route::post('/products/{product}/images', [ProductImageController::class, 'store'])
-    ->middleware(['auth:api', 'role:seller']);
+    Route::post('/products/{product}/images', [ProductImageController::class, 'store']);
+    Route::patch('/products/{product}/images/reorder', [ProductImageController::class, 'reorder']);
+    Route::delete('/products/{product}/images/{image}', [ProductImageController::class, 'destroy'])
+        ->scopeBindings();
+});
