@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\ProductImageController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\TagController;
+use App\Http\Controllers\ProductStockController;
 use Illuminate\Support\Facades\Route;
 
 // Authentication
@@ -54,5 +55,6 @@ Route::middleware(['auth:api', 'role:seller'])->group(function () {
     Route::post('/products/{product}/images', [ProductImageController::class, 'store']);
     Route::patch('/products/{product}/images/reorder', [ProductImageController::class, 'reorder']);
     Route::delete('/products/{product}/images/{image}', [ProductImageController::class, 'destroy'])
-        ->scopeBindings();
+    ->scopeBindings();
+    Route::patch('/products/{product}/stock', [ProductStockController::class, 'update']);
 });

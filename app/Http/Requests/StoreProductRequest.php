@@ -57,6 +57,11 @@ class StoreProductRequest extends FormRequest
                 'required',
                 Rule::enum(ProductStatus::class)
             ],
+            'stock' => [
+                'required',
+                'integer',
+                'min:0'
+            ],
             'tag_ids' => [
                 'sometimes',
                 'array'

@@ -40,6 +40,7 @@ class ProductSeeder extends Seeder
             'description' => 'Mechanical keyboard with hot-swappable switches, RGB backlight, and full-size layout for gaming and productivity.',
             'price' => 899000,
             'status' => ProductStatus::PUBLISHED,
+            'stock' => 10
         ]);
 
         $keyboard->tags()->sync([
@@ -57,6 +58,7 @@ class ProductSeeder extends Seeder
             'description' => 'Ergonomic wireless mouse with Bluetooth connectivity, rechargeable battery, and silent click buttons.',
             'price' => 249000,
             'status' => ProductStatus::PUBLISHED,
+            'stock' => 10
         ]);
 
         $mouse->tags()->sync([
@@ -74,6 +76,7 @@ class ProductSeeder extends Seeder
             'description' => 'A practical guide to writing clean, maintainable, and readable software by applying professional programming practices.',
             'price' => 315000,
             'status' => ProductStatus::PUBLISHED,
+            'stock' => 10
         ]);
 
         $book->tags()->sync([
@@ -90,6 +93,7 @@ class ProductSeeder extends Seeder
             'description' => 'Comfortable over-ear headphones with noise isolation and long battery life.',
             'price' => 599000,
             'status' => ProductStatus::DRAFT,
+            'stock' => 10
         ]);
 
         $headphones->tags()->sync([

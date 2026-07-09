@@ -21,6 +21,7 @@ return new class extends Migration
             $table->text('description');
             $table->unsignedBigInteger('price');
             $table->string('status');
+            $table->unsignedInteger('stock')->default(0);
             $table->timestamps();
         });
     }
