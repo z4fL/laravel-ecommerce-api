@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 
 #[Fillable([
     'seller_id',
@@ -119,5 +120,18 @@ class Product extends Model
                 $query->where('stock', 0);
             }
         }
+    }
+
+    #[Scope]
+    protected function sort(Builder $query, ?string $sort): void
+    {
+        if ($sort === null) {
+            $query->latest();
+            return;
+        }
+
+        $direction = Str::startsWith($sort, '-') ? 'desc' : 'asc';
+        $column = ltrim($sort, '-');
+        $query->orderBy($column, $direction);
     }
 }

@@ -19,7 +19,8 @@ class ProductController extends Controller
     public function index(ProductIndexRequest $request)
     {
         $search = $request->query('search');
-        $filters = $request->safe()->except('search');
+        $filters = $request->safe()->except(['search', 'sort']);
+        $sort = $request->input('sort');
 
         $perPage = $request->integer('per_page', 10);
 
@@ -31,6 +32,7 @@ class ProductController extends Controller
             ])
             ->search($search ?? null)
             ->filter($filters)
+            ->sort($sort)
             ->paginate($perPage);
 
         return $this->pagination(
