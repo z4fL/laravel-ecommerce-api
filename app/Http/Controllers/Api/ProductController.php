@@ -19,15 +19,18 @@ class ProductController extends Controller
     public function index(ProductIndexRequest $request)
     {
         $search = $request->query('search');
+        $filters = $request->safe()->except('search');
+
         $perPage = $request->integer('per_page', 10);
 
         $products = Product::query()
-            ->search($search)
             ->with([
                 'seller',
                 'category:id,name,slug',
                 'tags',
             ])
+            ->search($search ?? null)
+            ->filter($filters)
             ->paginate($perPage);
 
         return $this->pagination(

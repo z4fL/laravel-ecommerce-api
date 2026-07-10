@@ -83,4 +83,41 @@ class Product extends Model
                 });
         });
     }
+
+    #[Scope]
+    protected function filter(Builder $query, array $filters): void
+    {
+        $category = $filters['category'] ?? null;
+        $tag = $filters['tag'] ?? null;
+        $minPrice = $filters['min_price'] ?? null;
+        $maxPrice = $filters['max_price'] ?? null;
+
+        if ($category) {
+            $query->whereHas('category', function (Builder $q) use ($category) {
+                $q->where('slug', $category);
+            });
+        }
+
+        if ($tag) {
+            $query->whereHas('tags', function (Builder $q) use ($tag) {
+                $q->where('slug', $tag);
+            });
+        }
+
+        if ($minPrice !== null) {
+            $query->where('price', '>=', $minPrice);
+        }
+
+        if ($maxPrice !== null) {
+            $query->where('price', '<=', $maxPrice);
+        }
+
+        if (array_key_exists('in_stock', $filters)) {
+            if ($filters['in_stock']) {
+                $query->where('stock', '>', 0);
+            } else {
+                $query->where('stock', 0);
+            }
+        }
+    }
 }

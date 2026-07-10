@@ -23,8 +23,38 @@ class ProductIndexRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'page' => ['integer', 'min:1'],
-            'per_page' => ['integer', 'min:1', 'max:100']
+            'category' => [
+                'nullable',
+                'string'
+            ],
+            'tag' => [
+                'nullable',
+                'string'
+            ],
+            'min_price' => [
+                'nullable',
+                'numeric',
+                'min:0'
+            ],
+            'max_price' => [
+                'nullable',
+                'numeric',
+                'min:0',
+                'gte:min_price'
+            ],
+            'in_stock' => [
+                'nullable',
+                'boolean'
+            ],
+            'page' => [
+                'integer',
+                'min:1'
+            ],
+            'per_page' => [
+                'integer',
+                'min:1',
+                'max:100'
+            ]
         ];
     }
 }
