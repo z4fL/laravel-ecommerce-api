@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ProductIndexRequest;
 use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
 use App\Http\Resources\ProductResource;
 use App\Models\Product;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 
@@ -16,20 +16,24 @@ class ProductController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request)
+    public function index(ProductIndexRequest $request)
     {
         $search = $request->query('search');
+        $perPage = $request->integer('per_page', 10);
 
-        return $this->success(ProductResource::collection(
-            Product::query()
-                ->search($search)
-                ->with([
-                    'seller',
-                    'category',
-                    'tags',
-                ])
-                ->get()
-        ));
+        $products = Product::query()
+            ->search($search)
+            ->with([
+                'seller',
+                'category:id,name,slug',
+                'tags',
+            ])
+            ->paginate($perPage);
+
+        return $this->pagination(
+            paginator: $products,
+            data: ProductResource::collection($products),
+        );
     }
 
     /**
@@ -56,7 +60,7 @@ class ProductController extends Controller
             new ProductResource(
                 $product->load([
                     'seller',
-                    'category',
+                    'category:id,name,slug',
                     'tags',
                 ])
             )
@@ -70,7 +74,7 @@ class ProductController extends Controller
     {
         return $this->success(new ProductResource($product->load([
             'seller',
-            'category',
+            'category:id,name,slug',
             'tags',
         ])));
     }
@@ -99,7 +103,7 @@ class ProductController extends Controller
             new ProductResource(
                 $product->load([
                     'seller',
-                    'category',
+                    'category:id,name,slug',
                     'tags',
                 ])
             )
