@@ -4,6 +4,8 @@ namespace App\Models;
 
 use App\Traits\HasUniqueSlug;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -59,5 +61,26 @@ class Product extends Model
                     'sort_order' => $index + 1,
                 ]);
             });
+    }
+
+    #[Scope]
+    protected function search(Builder $query, ?string $search): void
+    {
+        if (blank($search)) {
+            return;
+        }
+        $query->where(function (Builder $q) use ($search) {
+            $q->where('name', 'ILIKE', "%{$search}%")
+                ->orWhere('description', 'ILIKE', "%{$search}%")
+                ->orWhereHas('category', function (Builder $q) use ($search) {
+                    $q->where('name', 'ILIKE', "%{$search}%");
+                })
+                ->orWhereHas('tags', function (Builder $q) use ($search) {
+                    $q->where('name', 'ILIKE', "%{$search}%");
+                })
+                ->orWhereHas('seller', function (Builder $q) use ($search) {
+                    $q->where('name', 'ILIKE', "%{$search}%");
+                });
+        });
     }
 }
