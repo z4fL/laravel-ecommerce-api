@@ -3,10 +3,11 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Product;
 use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
 use App\Http\Resources\ProductResource;
+use App\Models\Product;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 
@@ -15,10 +16,19 @@ class ProductController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
+        $search = $request->query('search');
+
         return $this->success(ProductResource::collection(
-            Product::with(['seller', 'category', 'tags'])->get()
+            Product::query()
+                ->search($search)
+                ->with([
+                    'seller',
+                    'category',
+                    'tags',
+                ])
+                ->get()
         ));
     }
 
