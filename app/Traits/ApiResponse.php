@@ -3,6 +3,7 @@
 namespace App\Traits;
 
 use Illuminate\Http\JsonResponse;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 trait ApiResponse
 {
@@ -89,6 +90,36 @@ trait ApiResponse
             extra: $errors ? [
                 'errors' => $errors
             ] : []
+        );
+    }
+
+    protected function pagination(
+        LengthAwarePaginator $paginator,
+        mixed $data,
+        string $message = self::DEFAULT_SUCCESS_MESSAGE
+    ): JsonResponse {
+        return $this->respond(
+            success: true,
+            message: $message,
+            data: $data,
+            extra: [
+                'meta' => [
+                    'total' => $paginator->total(),
+                    'per_page' => $paginator->perPage(),
+                    'current_page' => $paginator->currentPage(),
+                    'last_page' => $paginator->lastPage(),
+                    'count' => $paginator->count(),
+                    'from' => $paginator->firstItem(),
+                    'to' => $paginator->lastItem(),
+                ],
+                'links' => [
+                    'first' => $paginator->url(1),
+                    'last' => $paginator->url($paginator->lastPage()),
+                    'prev' => $paginator->previousPageUrl(),
+                    'next' => $paginator->nextPageUrl(),
+                    'path' => $paginator->path()
+                ],
+            ]
         );
     }
 }
