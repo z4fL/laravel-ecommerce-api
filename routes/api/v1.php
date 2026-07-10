@@ -6,7 +6,7 @@ use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\ProductImageController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\TagController;
-use App\Http\Controllers\ProductStockController;
+use App\Http\Controllers\Api\ProductStockController;
 use Illuminate\Support\Facades\Route;
 
 // Authentication
