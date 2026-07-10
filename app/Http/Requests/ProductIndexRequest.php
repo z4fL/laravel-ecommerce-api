@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class ProductIndexRequest extends FormRequest
 {
@@ -45,6 +46,16 @@ class ProductIndexRequest extends FormRequest
             'in_stock' => [
                 'nullable',
                 'boolean'
+            ],
+            'sort' => [
+                'nullable',
+                'string',
+                Rule::in([
+                    'name','-name',
+                    'price','-price',
+                    'created_at','-created_at',
+                    'updated_at','-updated_at',
+                ]),
             ],
             'page' => [
                 'integer',
