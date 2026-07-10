@@ -8,6 +8,7 @@ use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
 use App\Http\Resources\ProductResource;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 
 class ProductController extends Controller
 {
@@ -26,6 +27,8 @@ class ProductController extends Controller
      */
     public function store(StoreProductRequest $request)
     {
+        Gate::authorize('create', Product::class);
+
         $product = DB::transaction(function () use ($request) {
 
             $product = Product::create([
@@ -67,6 +70,8 @@ class ProductController extends Controller
      */
     public function update(UpdateProductRequest $request, Product $product)
     {
+        Gate::authorize('update', $product);
+
         $product = DB::transaction(function () use ($request, $product) {
 
             $validated = $request->validated();
@@ -96,6 +101,8 @@ class ProductController extends Controller
      */
     public function destroy(Product $product)
     {
+        Gate::authorize('delete', $product);
+
         $sku = $product->sku;
         $product->delete();
 

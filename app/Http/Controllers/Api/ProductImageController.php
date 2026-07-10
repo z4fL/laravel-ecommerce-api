@@ -9,6 +9,7 @@ use App\Http\Resources\ProductImageResource;
 use App\Models\Product;
 use App\Models\ProductImage;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 
 class ProductImageController extends Controller
@@ -25,6 +26,8 @@ class ProductImageController extends Controller
 
     public function store(UploadProductImageRequest $request, Product $product)
     {
+        Gate::authorize('update', $product);
+
         $imagePath = Storage::disk('public')->putFile('products', $request->safe()->file('image'));
 
         DB::beginTransaction();
@@ -50,6 +53,8 @@ class ProductImageController extends Controller
 
     public function destroy(Product $product, ProductImage $image)
     {
+        Gate::authorize('update', $product);
+
         $oldPath = $image->path;
 
         DB::beginTransaction();
@@ -72,6 +77,8 @@ class ProductImageController extends Controller
 
     public function reorder(ReorderProductImageRequest $request, Product $product)
     {
+        Gate::authorize('update', $product);
+
         DB::beginTransaction();
         try {
             $imageIds = $request->safe()['image_ids'];
