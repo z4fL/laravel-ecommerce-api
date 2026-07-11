@@ -32,8 +32,24 @@ class RegisterRequest extends FormRequest
                 'alpha_dash',
                 'unique:users,username'
             ],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'email' => [
+                'required',
+                'string',
+                'email',
+                'max:255',
+                'unique:users,email'
+            ],
+            'password' => [
+                'required',
+                'string',
+                'min:8',
+                'confirmed'
+            ],
+            'phone' => [
+                'required',
+                'string',
+                'max:20',
+            ]
         ];
     }
 }
