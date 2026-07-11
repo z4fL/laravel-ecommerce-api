@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\ProductImageController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\TagController;
 use App\Http\Controllers\Api\ProductStockController;
+use App\Http\Controllers\Api\StoreController;
 use Illuminate\Support\Facades\Route;
 
 // Authentication
@@ -21,10 +22,11 @@ Route::prefix('auth')->group(function () {
     });
 });
 
-// Profile
+// Protected
 Route::middleware('auth:api')->group(function () {
     Route::get('/me', [ProfileController::class, 'show']);
     Route::patch('/me', [ProfileController::class, 'update']);
+    Route::post('/store', [StoreController::class, 'store']);
 });
 
 // Categories
@@ -55,6 +57,6 @@ Route::middleware(['auth:api', 'role:seller'])->group(function () {
     Route::post('/products/{product}/images', [ProductImageController::class, 'store']);
     Route::patch('/products/{product}/images/reorder', [ProductImageController::class, 'reorder']);
     Route::delete('/products/{product}/images/{image}', [ProductImageController::class, 'destroy'])
-    ->scopeBindings();
+        ->scopeBindings();
     Route::patch('/products/{product}/stock', [ProductStockController::class, 'update']);
 });

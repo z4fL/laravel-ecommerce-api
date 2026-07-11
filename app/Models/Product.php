@@ -32,9 +32,9 @@ class Product extends Model
         return 'slug';
     }
 
-    public function seller(): BelongsTo
+    public function store(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'seller_id');
+        return $this->belongsTo(Store::class);
     }
 
     public function category(): BelongsTo

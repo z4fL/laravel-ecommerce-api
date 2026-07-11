@@ -2,7 +2,9 @@
 
 namespace Database\Seeders;
 
+use App\Enum\StoreStatus;
 use App\Enum\UserRole;
+use App\Models\Store;
 use App\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -41,6 +43,14 @@ class DatabaseSeeder extends Seeder
             'email' => 'zzzakc15@gmail.com',
             'phone' => fake('id_ID')->e164PhoneNumber(),
             'role' => UserRole::CUSTOMER,
+        ]);
+
+        Store::updateOrCreate([
+            'user_id' => 2,
+            'name' => fake()->name(),
+            'description' => fake()->text(),
+            'phone' => fake('id_ID')->e164PhoneNumber(),
+            'status' => StoreStatus::ACTIVE
         ]);
 
         $this->call([

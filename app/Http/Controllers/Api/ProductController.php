@@ -26,7 +26,7 @@ class ProductController extends Controller
 
         $products = Product::query()
             ->with([
-                'seller',
+                'store',
                 'category:id,name,slug',
                 'tags',
             ])
@@ -51,7 +51,7 @@ class ProductController extends Controller
         $product = DB::transaction(function () use ($request) {
 
             $product = Product::create([
-                'seller_id' => auth()->id(),
+                'store_id' => auth()->user()->store->id,
                 ...$request->safe()->except('tag_ids')
             ]);
 
@@ -64,7 +64,7 @@ class ProductController extends Controller
             'Product',
             new ProductResource(
                 $product->load([
-                    'seller',
+                    'store',
                     'category:id,name,slug',
                     'tags',
                 ])
@@ -78,7 +78,7 @@ class ProductController extends Controller
     public function show(Product $product)
     {
         return $this->success(new ProductResource($product->load([
-            'seller',
+            'store',
             'category:id,name,slug',
             'tags',
         ])));
@@ -107,7 +107,7 @@ class ProductController extends Controller
             'Product',
             new ProductResource(
                 $product->load([
-                    'seller',
+                    'store',
                     'category:id,name,slug',
                     'tags',
                 ])

@@ -18,6 +18,7 @@ class ProductSeeder extends Seeder
     public function run(): void
     {
         $seller = User::where('role', UserRole::SELLER)->firstOrFail();
+        $storeId = $seller->store->id;
 
         $electronics = Category::where('slug', 'electronics')->firstOrFail();
         $books = Category::where('slug', 'books')->firstOrFail();
@@ -33,7 +34,7 @@ class ProductSeeder extends Seeder
 
         // 1
         $keyboard = Product::create([
-            'seller_id' => $seller->id,
+            'store_id' => $storeId,
             'category_id' => $electronics->id,
             'sku' => 'ELC-001',
             'name' => 'Mechanical Keyboard RGB',
@@ -51,7 +52,7 @@ class ProductSeeder extends Seeder
 
         // 2
         $mouse = Product::create([
-            'seller_id' => $seller->id,
+            'store_id' => $storeId,
             'category_id' => $electronics->id,
             'sku' => 'ELC-002',
             'name' => 'Wireless Bluetooth Mouse',
@@ -69,7 +70,7 @@ class ProductSeeder extends Seeder
 
         // 3
         $book = Product::create([
-            'seller_id' => $seller->id,
+            'store_id' => $storeId,
             'category_id' => $books->id,
             'sku' => 'BOK-001',
             'name' => 'Clean Code',
@@ -86,7 +87,7 @@ class ProductSeeder extends Seeder
 
         // 4 (draft)
         $headphones = Product::create([
-            'seller_id' => $seller->id,
+            'store_id' => $storeId,
             'category_id' => $electronics->id,
             'sku' => 'ELC-003',
             'name' => 'Over-Ear Wireless Headphones',

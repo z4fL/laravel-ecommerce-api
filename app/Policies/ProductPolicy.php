@@ -45,7 +45,8 @@ class ProductPolicy
      */
     public function create(User $user): Response
     {
-        return $user->role === UserRole::SELLER
+        return ($user->role === UserRole::SELLER
+            && $user->store()->exists())
             ? Response::allow()
             : Response::deny('Only sellers can create products.');
     }
@@ -55,7 +56,7 @@ class ProductPolicy
      */
     public function update(User $user, Product $product): Response
     {
-        return $user->id === $product->seller_id
+        return $user->id === $product->store->user_id
             ? Response::allow()
             : Response::deny('You do not own this product.');
     }
