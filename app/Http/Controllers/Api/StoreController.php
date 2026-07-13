@@ -8,12 +8,14 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreUserStoreRequest;
 use App\Http\Requests\UpdateStoreRequest;
 use App\Http\Resources\StoreResource;
+use App\Models\Product;
 use App\Models\Store;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class StoreController extends Controller
 {
+    // PUBLIC START
+
     /**
      * Display a listing of the resource.
      */
@@ -21,6 +23,26 @@ class StoreController extends Controller
     {
         //
     }
+
+    /**
+     * Display the specified resource.
+     */
+    public function show(Store $store)
+    {
+        //
+    }
+
+    /**
+     * Display the specified resource.
+     */
+    public function showProducts(Product $product)
+    {
+        //
+    }
+
+    // PUBLIC END
+
+    // SELLER START
 
     /**
      * Store a newly created resource in storage.
@@ -62,7 +84,7 @@ class StoreController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Store $store)
+    public function me()
     {
         //
     }
@@ -70,7 +92,7 @@ class StoreController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateStoreRequest $request, Store $store)
+    public function update(UpdateStoreRequest $request)
     {
         //
     }
@@ -78,8 +100,10 @@ class StoreController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Store $store)
+    public function destroy()
     {
         //
     }
+
+    // SELLER END
 }

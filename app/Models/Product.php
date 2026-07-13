@@ -71,6 +71,12 @@ class Product extends Model
     }
 
     #[Scope]
+    protected function published(Builder $query): void
+    {
+        $query->where('status', ProductStatus::PUBLISHED);
+    }
+
+    #[Scope]
     protected function search(Builder $query, ?string $search): void
     {
         if (blank($search)) {

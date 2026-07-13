@@ -2,21 +2,23 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Concerns\InteractsWithCurrentStore;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ReorderProductImageRequest;
 use App\Http\Requests\UploadProductImageRequest;
 use App\Http\Resources\ProductImageResource;
-use App\Models\Product;
-use App\Models\ProductImage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 
 class ProductImageController extends Controller
 {
+    use InteractsWithCurrentStore;
 
-    public function index(Product $product)
+    public function index(string $product)
     {
+        $product = $this->findOwnedProduct($product);
+
         return $this->success(
             ProductImageResource::collection(
                 $product->images()->orderBy('sort_order')->get()
@@ -24,8 +26,9 @@ class ProductImageController extends Controller
         );
     }
 
-    public function store(UploadProductImageRequest $request, Product $product)
+    public function store(UploadProductImageRequest $request, string $product)
     {
+        $product = $this->findOwnedProduct($product);
         Gate::authorize('update', $product);
 
         $imagePath = Storage::disk('public')->putFile('products', $request->safe()->file('image'));
@@ -51,9 +54,14 @@ class ProductImageController extends Controller
         return $this->created('Product Image', new ProductImageResource($image));
     }
 
-    public function destroy(Product $product, ProductImage $image)
+    public function destroy(string $product, string $image)
     {
+        $product = $this->findOwnedProduct($product);
         Gate::authorize('update', $product);
+
+        $image = $product->images()
+            ->whereKey($image)
+            ->firstOrFail();
 
         $oldPath = $image->path;
 
@@ -75,8 +83,9 @@ class ProductImageController extends Controller
         return $this->deleted('Product Image');
     }
 
-    public function reorder(ReorderProductImageRequest $request, Product $product)
+    public function reorder(ReorderProductImageRequest $request, string $product)
     {
+        $product = $this->findOwnedProduct($product);
         Gate::authorize('update', $product);
 
         DB::beginTransaction();
