@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enum\ProductStatus;
 use App\Traits\HasUniqueSlug;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Scope;
@@ -50,6 +51,11 @@ class Product extends Model
     public function images(): HasMany
     {
         return $this->hasMany(ProductImage::class);
+    }
+
+    public function cartItem(): HasMany
+    {
+        return $this->hasMany(CartItem::class);
     }
 
     public function reorderImages(): void

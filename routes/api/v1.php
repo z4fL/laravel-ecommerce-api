@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\CartController;
+use App\Http\Controllers\Api\CartItemController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\ProductImageController;
@@ -60,3 +62,13 @@ Route::middleware(['auth:api', 'role:seller'])->group(function () {
         ->scopeBindings();
     Route::patch('/products/{product}/stock', [ProductStockController::class, 'update']);
 });
+
+// Cart
+Route::prefix('cart')->group(function () {
+    Route::get('/', [CartController::class, 'show']);
+    Route::delete('/', [CartController::class, 'destroy']);
+
+    Route::post('/items/{product}', [CartItemController::class, 'store']);
+    Route::patch('/items/{item}', [CartItemController::class, 'update']);
+    Route::delete('/items/{item}', [CartItemController::class, 'destroy']);
+})->middleware(['auth:api']);
