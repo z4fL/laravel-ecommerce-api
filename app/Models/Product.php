@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enum\ProductStatus;
 use App\Traits\HasUniqueSlug;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Scope;
@@ -62,6 +63,12 @@ class Product extends Model
                     'sort_order' => $index + 1,
                 ]);
             });
+    }
+
+    #[Scope]
+    protected function published(Builder $query): void
+    {
+        $query->where('status', ProductStatus::PUBLISHED);
     }
 
     #[Scope]

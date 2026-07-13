@@ -35,9 +35,11 @@ class ProductPolicy
     /**
      * Determine whether the user can view the model.
      */
-    public function view(User $user, Product $product): bool
+    public function view(User $user, Product $product): Response
     {
-        return true;
+        return $user->id === $product->store->user_id
+            ? Response::allow()
+            : Response::denyAsNotFound();
     }
 
     /**
@@ -56,7 +58,7 @@ class ProductPolicy
      */
     public function update(User $user, Product $product): Response
     {
-        return $user->id === $product->store->user_id
+        return $user->is($product->store->user)
             ? Response::allow()
             : Response::deny('You do not own this product.');
     }
