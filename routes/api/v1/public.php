@@ -25,7 +25,7 @@ Route::apiResource('tags', TagController::class)
 
 // Products
 Route::get('/products', [ProductController::class, 'index']);
-Route::get('/products/{product}', [ProductController::class, 'show']);
+Route::get('/products/{public_product}', [ProductController::class, 'show']);
 
 Route::prefix('stores')->group(function () {
     Route::get('/', [StoreProductController::class, 'index']);

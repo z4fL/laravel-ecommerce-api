@@ -41,17 +41,14 @@ class ProductController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Product $product)
+    public function show(Product $public_product)
     {
+        $product = $public_product->load([
+            'store',
+            'category:id,name,slug',
+            'tags',
+        ]);
 
-        $productData = $product->query()
-            ->published()
-            ->load([
-                'store',
-                'category:id,name,slug',
-                'tags',
-            ]);
-
-        return $this->success(new ProductResource($productData));
+        return $this->success(new ProductResource($product));
     }
 }
