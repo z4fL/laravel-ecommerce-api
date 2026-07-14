@@ -53,7 +53,6 @@ class StoreProductController extends Controller
         $product = DB::transaction(function () use ($request) {
 
             $product = $this->products()->create([
-                'store_id' => auth()->user()->store->id,
                 ...$request->safe()->except('tag_ids')
             ]);
 
@@ -77,13 +76,11 @@ class StoreProductController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $product)
+    public function show(Product $store_product)
     {
-        $product = $this->findOwnedProduct($product);
+        Gate::authorize('view', $store_product);
 
-        Gate::authorize('view', $product);
-
-        return $this->success(new ProductResource($product->load([
+        return $this->success(new ProductResource($store_product->load([
             'store',
             'category:id,name,slug',
             'tags',
@@ -93,25 +90,23 @@ class StoreProductController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateProductRequest $request, string $product)
+    public function update(UpdateProductRequest $request, Product $store_product)
     {
-        $product = $this->findOwnedProduct($product);
+        Gate::authorize('update', $store_product);
 
-        Gate::authorize('update', $product);
-
-        $product = DB::transaction(function () use ($request, $product) {
+        $product = DB::transaction(function () use ($request, $store_product) {
 
             $validated = $request->validated();
 
-            $product->update(
+            $store_product->update(
                 $request->safe()->except('tag_ids')
             );
 
             if (array_key_exists('tag_ids', $validated)) {
-                $product->tags()->sync($validated['tag_ids']);
+                $store_product->tags()->sync($validated['tag_ids']);
             }
 
-            return $product;
+            return $store_product;
         });
 
         return $this->updated(
@@ -129,14 +124,12 @@ class StoreProductController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $product)
+    public function destroy(Product $store_product)
     {
-        $product = $this->findOwnedProduct($product);
+        Gate::authorize('delete', $store_product);
 
-        Gate::authorize('delete', $product);
-
-        $sku = $product->sku;
-        $product->delete();
+        $sku = $store_product->sku;
+        $store_product->delete();
 
         return $this->deleted('Product', sprintf("Product with SKU: %s deleted successfully.", $sku));
     }

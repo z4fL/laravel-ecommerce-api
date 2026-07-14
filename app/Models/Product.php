@@ -7,6 +7,7 @@ use App\Traits\HasUniqueSlug;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -14,7 +15,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
 #[Fillable([
-    'seller_id',
+    'store_id',
     'category_id',
     'sku',
     'name',
@@ -26,7 +27,7 @@ use Illuminate\Support\Str;
 ])]
 class Product extends Model
 {
-    use HasUniqueSlug;
+    use HasUniqueSlug, HasFactory;
 
     public function getRouteKeyName(): string
     {
@@ -78,16 +79,16 @@ class Product extends Model
             return;
         }
         $query->where(function (Builder $q) use ($search) {
-            $q->where('name', 'ILIKE', "%{$search}%")
-                ->orWhere('description', 'ILIKE', "%{$search}%")
+            $q->where('name', 'LIKE', "%{$search}%")
+                ->orWhere('description', 'LIKE', "%{$search}%")
                 ->orWhereHas('category', function (Builder $q) use ($search) {
-                    $q->where('name', 'ILIKE', "%{$search}%");
+                    $q->where('name', 'LIKE', "%{$search}%");
                 })
                 ->orWhereHas('tags', function (Builder $q) use ($search) {
-                    $q->where('name', 'ILIKE', "%{$search}%");
+                    $q->where('name', 'LIKE', "%{$search}%");
                 })
-                ->orWhereHas('seller', function (Builder $q) use ($search) {
-                    $q->where('name', 'ILIKE', "%{$search}%");
+                ->orWhereHas('store', function (Builder $q) use ($search) {
+                    $q->where('name', 'LIKE', "%{$search}%");
                 });
         });
     }

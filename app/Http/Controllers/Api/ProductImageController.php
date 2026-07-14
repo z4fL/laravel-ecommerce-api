@@ -7,6 +7,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\ReorderProductImageRequest;
 use App\Http\Requests\UploadProductImageRequest;
 use App\Http\Resources\ProductImageResource;
+use App\Models\Product;
+use App\Models\ProductImage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
@@ -26,16 +28,15 @@ class ProductImageController extends Controller
         );
     }
 
-    public function store(UploadProductImageRequest $request, string $product)
+    public function store(UploadProductImageRequest $request, Product $store_product)
     {
-        $product = $this->findOwnedProduct($product);
-        Gate::authorize('update', $product);
+        Gate::authorize('update', $store_product);
 
         $imagePath = Storage::disk('public')->putFile('products', $request->safe()->file('image'));
 
         DB::beginTransaction();
         try {
-            $imageRelation = $product->images();
+            $imageRelation = $store_product->images();
             $sortOrder = ($imageRelation->max('sort_order') ?? 0) + 1;
 
             $image = $imageRelation->create([
@@ -54,14 +55,9 @@ class ProductImageController extends Controller
         return $this->created('Product Image', new ProductImageResource($image));
     }
 
-    public function destroy(string $product, string $image)
+    public function destroy(Product $store_product, ProductImage $image)
     {
-        $product = $this->findOwnedProduct($product);
-        Gate::authorize('update', $product);
-
-        $image = $product->images()
-            ->whereKey($image)
-            ->firstOrFail();
+        Gate::authorize('update', $store_product);
 
         $oldPath = $image->path;
 
@@ -69,7 +65,7 @@ class ProductImageController extends Controller
 
         try {
             $image->delete();
-            $product->reorderImages();
+            $store_product->reorderImages();
 
             DB::commit();
         } catch (\Throwable $th) {
@@ -83,17 +79,16 @@ class ProductImageController extends Controller
         return $this->deleted('Product Image');
     }
 
-    public function reorder(ReorderProductImageRequest $request, string $product)
+    public function reorder(ReorderProductImageRequest $request, Product $store_product)
     {
-        $product = $this->findOwnedProduct($product);
-        Gate::authorize('update', $product);
+        Gate::authorize('update', $store_product);
 
         DB::beginTransaction();
         try {
             $imageIds = $request->safe()['image_ids'];
 
             foreach ($imageIds as $index => $id) {
-                $product->images()
+                $store_product->images()
                     ->whereKey($id)
                     ->update([
                         'sort_order' => $index + 1,
@@ -109,7 +104,7 @@ class ProductImageController extends Controller
 
         return $this->success(
             ProductImageResource::collection(
-                $product->images()->orderBy('sort_order')->get()
+                $store_product->images()->orderBy('sort_order')->get()
             )
         );
     }
