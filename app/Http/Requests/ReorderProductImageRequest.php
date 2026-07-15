@@ -47,7 +47,7 @@ class ReorderProductImageRequest extends FormRequest
                     return;
                 }
 
-                $product = $this->route('product');
+                $product = $this->route('store_product');
 
                 $imageIds = $this->safe()->collect('image_ids');
 

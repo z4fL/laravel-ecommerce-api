@@ -3,7 +3,7 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\ProductController;
-use App\Http\Controllers\Api\StoreProductController;
+use App\Http\Controllers\Api\StoreController;
 use App\Http\Controllers\Api\TagController;
 use Illuminate\Support\Facades\Route;
 
@@ -28,7 +28,7 @@ Route::get('/products', [ProductController::class, 'index']);
 Route::get('/products/{public_product}', [ProductController::class, 'show']);
 
 Route::prefix('stores')->group(function () {
-    Route::get('/', [StoreProductController::class, 'index']);
-    Route::get('/{store}', [StoreProductController::class, 'show']);
-    Route::get('/{store}/products', [StoreProductController::class, 'showProducts']);
+    Route::get('/', [StoreController::class, 'index']);
+    Route::get('/{store}', [StoreController::class, 'show']);
+    Route::get('/{store}/products', [StoreController::class, 'showProducts']);
 });

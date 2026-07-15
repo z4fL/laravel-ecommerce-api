@@ -8,18 +8,18 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 trait InteractsWithCurrentStore
 {
-    protected function user(): User
+    protected function currentUser(): User
     {
         return request()->user();
     }
 
-    protected function store(): Store
+    protected function currentStore(): Store
     {
-        return $this->user()->store;
+        return $this->currentUser()->store;
     }
 
-    protected function products(): HasMany
+    protected function currentStoreProducts(): HasMany
     {
-        return $this->store()->products();
+        return $this->currentStore()->products();
     }
 }

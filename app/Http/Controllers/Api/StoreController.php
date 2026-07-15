@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Api;
 use App\Enum\StoreStatus;
 use App\Enum\UserRole;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ProductIndexRequest;
 use App\Http\Requests\StoreUserStoreRequest;
 use App\Http\Requests\UpdateStoreRequest;
+use App\Http\Resources\ProductResource;
 use App\Http\Resources\StoreResource;
 use App\Models\Product;
 use App\Models\Store;
@@ -21,7 +23,7 @@ class StoreController extends Controller
      */
     public function index()
     {
-        //
+        return $this->success(StoreResource::collection(Store::all()));
     }
 
     /**
@@ -29,15 +31,36 @@ class StoreController extends Controller
      */
     public function show(Store $store)
     {
-        //
+        return $this->success(new StoreResource($store));
     }
 
     /**
      * Display the specified resource.
      */
-    public function showProducts(Product $product)
+    public function showProducts(Store $store, ProductIndexRequest $request)
     {
-        //
+        $search = $request->query('search');
+        $filters = $request->safe()->except(['search', 'sort']);
+        $sort = $request->input('sort');
+        $perPage = $request->integer('per_page', 10);
+
+        $products = Product::query()
+            ->whereBelongsTo($store)
+            ->published()
+            ->with([
+                'store',
+                'category:id,name,slug',
+                'tags',
+            ])
+            ->search($search)
+            ->filter($filters)
+            ->sort($sort)
+            ->paginate($perPage);
+
+        return $this->pagination(
+            paginator: $products,
+            data: ProductResource::collection($products),
+        );
     }
 
     // PUBLIC END

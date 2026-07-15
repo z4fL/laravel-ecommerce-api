@@ -10,8 +10,7 @@ use Illuminate\Support\Facades\Gate;
 
 class ProductStockController extends Controller
 {
-
-    public function update(Product $store_product, UpdateProductStockRequest $request)
+    public function update(UpdateProductStockRequest $request, Product $store_product)
     {
         Gate::authorize('update', $store_product);
 
@@ -21,8 +20,8 @@ class ProductStockController extends Controller
             'Product',
             new ProductResource(
                 $store_product->load([
-                    'seller',
-                    'category',
+                    'store',
+                    'category:id,name,slug',
                     'tags',
                 ])
             )

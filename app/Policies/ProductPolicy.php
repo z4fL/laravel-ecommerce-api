@@ -19,7 +19,15 @@ class ProductPolicy
         }
 
         return match ($ability) {
-            'update', 'delete' => true,
+            'view',
+            'viewAny',
+            'update',
+            'delete',
+            'restore',
+            'forceDelete' => true,
+
+            'create' => null,
+
             default => null,
         };
     }
@@ -60,7 +68,7 @@ class ProductPolicy
     {
         return $user->is($product->store->user)
             ? Response::allow()
-            : Response::deny('You do not own this product.');
+            : Response::denyAsNotFound();
     }
 
     /**
