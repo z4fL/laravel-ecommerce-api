@@ -26,7 +26,7 @@ class StoreProductController extends Controller
         $sort = $request->input('sort');
         $perPage = $request->integer('per_page', 10);
 
-        $products = $this->products()
+        $products = $this->currentStoreProducts()
             ->with([
                 'store',
                 'category:id,name,slug',
@@ -52,7 +52,7 @@ class StoreProductController extends Controller
 
         $product = DB::transaction(function () use ($request) {
 
-            $product = $this->products()->create([
+            $product = $this->currentStoreProducts()->create([
                 ...$request->safe()->except('tag_ids')
             ]);
 

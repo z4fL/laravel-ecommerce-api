@@ -6,7 +6,7 @@ use App\Http\Controllers\Api\StoreController;
 use App\Http\Controllers\Api\StoreProductController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['auth:api', 'role:seller'])
+Route::middleware(['auth:api', 'role:seller,admin'])
     ->prefix('store')
     ->group(function () {
         Route::get('/', [StoreController::class, 'me']);
