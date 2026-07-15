@@ -34,7 +34,7 @@ class UpdateProductRequest extends FormRequest
                 'sometimes',
                 'string',
                 'max:50',
-                Rule::unique('products')->ignore($this->route('product')),
+                Rule::unique('products')->ignore($this->route('store_product'))
             ],
             'name' => [
                 'sometimes',

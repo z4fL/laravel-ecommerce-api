@@ -10,18 +10,18 @@ use Illuminate\Support\Facades\Gate;
 
 class ProductStockController extends Controller
 {
-    public function update(Product $product, UpdateProductStockRequest $request)
+    public function update(UpdateProductStockRequest $request, Product $store_product)
     {
-        Gate::authorize('update', $product);
+        Gate::authorize('update', $store_product);
 
-        $product->update($request->safe()->only('stock'));
+        $store_product->update($request->safe()->only('stock'));
 
         return $this->updated(
             'Product',
             new ProductResource(
-                $product->load([
-                    'seller',
-                    'category',
+                $store_product->load([
+                    'store',
+                    'category:id,name,slug',
                     'tags',
                 ])
             )

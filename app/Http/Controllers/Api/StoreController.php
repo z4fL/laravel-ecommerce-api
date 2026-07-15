@@ -5,22 +5,67 @@ namespace App\Http\Controllers\Api;
 use App\Enum\StoreStatus;
 use App\Enum\UserRole;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ProductIndexRequest;
 use App\Http\Requests\StoreUserStoreRequest;
 use App\Http\Requests\UpdateStoreRequest;
+use App\Http\Resources\ProductResource;
 use App\Http\Resources\StoreResource;
+use App\Models\Product;
 use App\Models\Store;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class StoreController extends Controller
 {
+    // PUBLIC START
+
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        //
+        return $this->success(StoreResource::collection(Store::all()));
     }
+
+    /**
+     * Display the specified resource.
+     */
+    public function show(Store $store)
+    {
+        return $this->success(new StoreResource($store));
+    }
+
+    /**
+     * Display the specified resource.
+     */
+    public function showProducts(Store $store, ProductIndexRequest $request)
+    {
+        $search = $request->query('search');
+        $filters = $request->safe()->except(['search', 'sort']);
+        $sort = $request->input('sort');
+        $perPage = $request->integer('per_page', 10);
+
+        $products = Product::query()
+            ->whereBelongsTo($store)
+            ->published()
+            ->with([
+                'store',
+                'category:id,name,slug',
+                'tags',
+            ])
+            ->search($search)
+            ->filter($filters)
+            ->sort($sort)
+            ->paginate($perPage);
+
+        return $this->pagination(
+            paginator: $products,
+            data: ProductResource::collection($products),
+        );
+    }
+
+    // PUBLIC END
+
+    // SELLER START
 
     /**
      * Store a newly created resource in storage.
@@ -62,7 +107,7 @@ class StoreController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Store $store)
+    public function me()
     {
         //
     }
@@ -70,7 +115,7 @@ class StoreController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateStoreRequest $request, Store $store)
+    public function update(UpdateStoreRequest $request)
     {
         //
     }
@@ -78,8 +123,10 @@ class StoreController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Store $store)
+    public function destroy()
     {
         //
     }
+
+    // SELLER END
 }

@@ -1,0 +1,136 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Concerns\InteractsWithCurrentStore;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\ProductIndexRequest;
+use App\Http\Requests\StoreProductRequest;
+use App\Http\Requests\UpdateProductRequest;
+use App\Http\Resources\ProductResource;
+use App\Models\Product;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
+
+class StoreProductController extends Controller
+{
+    use InteractsWithCurrentStore;
+
+    /**
+     * Display a listing of the resource.
+     */
+    public function index(ProductIndexRequest $request)
+    {
+        $search = $request->query('search');
+        $filters = $request->safe()->except(['search', 'sort']);
+        $sort = $request->input('sort');
+        $perPage = $request->integer('per_page', 10);
+
+        $products = $this->currentStoreProducts()
+            ->with([
+                'store',
+                'category:id,name,slug',
+                'tags',
+            ])
+            ->search($search ?? null)
+            ->filter($filters)
+            ->sort($sort)
+            ->paginate($perPage);
+
+        return $this->pagination(
+            paginator: $products,
+            data: ProductResource::collection($products),
+        );
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(StoreProductRequest $request)
+    {
+        Gate::authorize('create', Product::class);
+
+        $product = DB::transaction(function () use ($request) {
+
+            $product = $this->currentStoreProducts()->create([
+                ...$request->safe()->except('tag_ids')
+            ]);
+
+            $product->tags()->sync($request->validated('tag_ids', []));
+
+            return $product;
+        });
+
+        return $this->created(
+            'Product',
+            new ProductResource(
+                $product->load([
+                    'store',
+                    'category:id,name,slug',
+                    'tags',
+                ])
+            )
+        );
+    }
+
+    /**
+     * Display the specified resource.
+     */
+    public function show(Product $store_product)
+    {
+        Gate::authorize('view', $store_product);
+
+        return $this->success(new ProductResource($store_product->load([
+            'store',
+            'category:id,name,slug',
+            'tags',
+        ])));
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(UpdateProductRequest $request, Product $store_product)
+    {
+        Gate::authorize('update', $store_product);
+
+        $product = DB::transaction(function () use ($request, $store_product) {
+
+            $validated = $request->validated();
+
+            $store_product->update(
+                $request->safe()->except('tag_ids')
+            );
+
+            if (array_key_exists('tag_ids', $validated)) {
+                $store_product->tags()->sync($validated['tag_ids']);
+            }
+
+            return $store_product;
+        });
+
+        return $this->updated(
+            'Product',
+            new ProductResource(
+                $product->load([
+                    'store',
+                    'category:id,name,slug',
+                    'tags',
+                ])
+            )
+        );
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(Product $store_product)
+    {
+        Gate::authorize('delete', $store_product);
+
+        $sku = $store_product->sku;
+        $store_product->delete();
+
+        return $this->deleted('Product', sprintf("Product with SKU: %s deleted successfully.", $sku));
+    }
+}
