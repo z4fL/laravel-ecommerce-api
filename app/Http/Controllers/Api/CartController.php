@@ -4,40 +4,31 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\CartResource;
-use App\Models\Cart;
+use Illuminate\Http\Request;
 
 class CartController extends Controller
 {
     /**
      * Display the specified resource.
      */
-    public function show()
+    public function show(Request $request)
     {
-        $user = auth('api')->user();
+        $user = $request->user();
+        $cart = $user->cart()->firstOrCreate();
 
-        if (!$user->cart()->exists()) {
-            $cart = new Cart();
-            $cart->setRelation('cartItems', collect());
-        }
+        $cart->load('cartItems.product');
 
-        $cart = $user->cart->load('cartItems');
-
-        return $this->success(new CartResource($cart->load([
-            'cartItems',
-        ])));
+        return $this->success(
+            new CartResource($cart)
+        );
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy()
+    public function destroy(Request $request)
     {
-        $user = auth('api')->user();
-
-        $userCart = $user->cart;
-        $userCart->cartItems()
-            ->where('cart_id', $userCart->id)
-            ->delete();
+        $request->user()->cart?->cartItems()->delete();
 
         return $this->deleted('Cart');
     }

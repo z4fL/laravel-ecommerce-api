@@ -8,7 +8,6 @@ use App\Http\Requests\UpdateCartItemRequest;
 use App\Http\Resources\CartItemResource;
 use App\Models\CartItem;
 use App\Models\Product;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 
@@ -17,45 +16,31 @@ class CartItemController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreCartItemRequest $request, Product $product)
+    public function store(StoreCartItemRequest $request, Product $public_product)
     {
-        $user = auth('api')->user();
+        Gate::authorize('addToCart', $public_product);
 
-        $validated = $request->validated();
+        $public_product->loadMissing('store');
 
-        $product->loadMissing('store');
-
-        if (! $product->is_active) {
-            return $this->error(
-                'Product is inactive.',
-                Response::HTTP_UNPROCESSABLE_ENTITY
-            );
-        }
-
-        if ($product->store->user_id === $user->id) {
-            return $this->error(
-                'You cannot add your own product to the cart.',
-                Response::HTTP_FORBIDDEN
-            );
-        }
-
-        $cartItem = DB::transaction(function () use ($validated, $user, $product) {
+        $cartItem = DB::transaction(function () use ($request, $public_product) {
+            $validated = $request->validated();
+            $user = $request->user();
 
             $cart = $user->cart()->firstOrCreate([
                 'user_id' => $user->id,
             ]);
 
             $cartItem = $cart->cartItems()
-                ->where('product_id', $product->id)
+                ->where('product_id', $public_product->id)
                 ->first();
 
             if ($cartItem) {
                 $cartItem->increment('quantity', $validated['quantity']);
             } else {
                 $cartItem = $cart->cartItems()->create([
-                    'product_id'     => $product->id,
+                    'product_id'     => $public_product->id,
                     'quantity'       => $validated['quantity'],
-                    'price_snapshot' => $product->price,
+                    'price_snapshot' => $public_product->price,
                 ]);
             }
 
@@ -68,6 +53,7 @@ class CartItemController extends Controller
             'Cart item',
             new CartItemResource(
                 $cartItem->load([
+                    'cart',
                     'product',
                 ])
             )
@@ -92,6 +78,7 @@ class CartItemController extends Controller
             'Cart item',
             new CartItemResource(
                 $item->load([
+                    'cart',
                     'product',
                 ])
             )

@@ -94,4 +94,14 @@ class ProductPolicy
     {
         return false;
     }
+
+    /**
+     * Determine whether the user can add model to cart.
+     */
+    public function addToCart(User $user, Product $product): Response
+    {
+        return $user->id !== $product->store->user_id
+            ? Response::allow()
+            : Response::deny('You cannot add your own product to the cart.');
+    }
 }
