@@ -47,6 +47,11 @@ class User extends Authenticatable implements JWTSubject
         return $this->hasOne(Store::class, 'user_id');
     }
 
+    public function cart(): HasOne
+    {
+        return $this->hasOne(Cart::class, 'user_id');
+    }
+
     /**
      * Get the identifier that will be stored in the JWT token.
      */

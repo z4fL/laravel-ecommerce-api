@@ -54,6 +54,11 @@ class Product extends Model
         return $this->hasMany(ProductImage::class);
     }
 
+    public function cartItem(): HasMany
+    {
+        return $this->hasMany(CartItem::class);
+    }
+
     public function reorderImages(): void
     {
         $this->images()

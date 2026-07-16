@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\CartController;
+use App\Http\Controllers\Api\CartItemController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\StoreController;
@@ -19,7 +21,7 @@ Route::prefix('auth')->group(function () {
 Route::apiResource('categories', CategoryController::class)
     ->only(['index', 'show']);
 
-    // Tags
+// Tags
 Route::apiResource('tags', TagController::class)
     ->only(['index', 'show']);
 
@@ -32,3 +34,15 @@ Route::prefix('stores')->group(function () {
     Route::get('/{store}', [StoreController::class, 'show']);
     Route::get('/{store}/products', [StoreController::class, 'showProducts']);
 });
+
+// Cart
+Route::middleware(['auth:api'])
+    ->prefix('cart')
+    ->group(function () {
+        Route::get('/', [CartController::class, 'show']);
+        Route::delete('/', [CartController::class, 'destroy']);
+
+        Route::post('/items/{public_product}', [CartItemController::class, 'store']);
+        Route::patch('/items/{item}', [CartItemController::class, 'update']);
+        Route::delete('/items/{item}', [CartItemController::class, 'destroy']);
+    });
