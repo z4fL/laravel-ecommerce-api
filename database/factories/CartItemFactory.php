@@ -34,9 +34,11 @@ class CartItemFactory extends Factory
                 $item->price_snapshot = $item->product->price;
             }
         })->afterCreating(function (CartItem $item) {
-            $item->updateQuietly([
-                'price_snapshot' => $item->product->price
-            ]);
+            if ($item->price_snapshot === 0) {
+                $item->updateQuietly([
+                    'price_snapshot' => $item->product->price,
+                ]);
+            }
         });
     }
 
