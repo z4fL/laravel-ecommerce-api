@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enum\StoreStatus;
 use App\Traits\HasUniqueSlug;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -24,6 +25,18 @@ class Store extends Model
     public function getRouteKeyName(): string
     {
         return 'slug';
+    }
+
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'status' => StoreStatus::class
+        ];
     }
 
     public function user(): BelongsTo

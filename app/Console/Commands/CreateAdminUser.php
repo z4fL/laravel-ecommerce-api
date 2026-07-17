@@ -78,7 +78,7 @@ class CreateAdminUser extends Command
             [
                 ['Name', $name],
                 ['Email', $email],
-                ['Role', UserRole::ADMIN->value],
+                ['Role', UserRole::ADMIN],
             ]
         );
 
