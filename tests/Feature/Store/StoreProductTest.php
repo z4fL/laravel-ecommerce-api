@@ -52,7 +52,7 @@ describe("GET /store/products", function () {
         $response
             ->assertOk()
             ->assertJsonCount(2, 'data')
-            ->assertJsonFragment(['status' => ProductStatus::DRAFT->value]);
+            ->assertJsonFragment(['status' => ProductStatus::DRAFT]);
 
         expect(collect($response->json('data'))
             ->pluck('status'))
