@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\ShippingAddressController;
 use App\Http\Controllers\Api\StoreController;
 use App\Http\Controllers\Api\TagController;
+use App\Http\Controllers\CheckoutController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth:api')->group(function () {
@@ -21,6 +22,8 @@ Route::middleware('auth:api')->group(function () {
     Route::apiResource('/shipping-addresses', ShippingAddressController::class);
 
     Route::patch('/shipping-addresses/{shipping_address}/default', [ShippingAddressController::class, 'makeDefault']);
+
+    Route::post('/checkout', [CheckoutController::class, 'preview']);
 });
 
 Route::middleware(['auth:api', 'role:admin'])->group(function () {
