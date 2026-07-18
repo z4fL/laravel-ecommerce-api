@@ -29,12 +29,14 @@ trait ApiResponse
 
     protected function success(
         mixed $data = null,
-        string $message = self::DEFAULT_SUCCESS_MESSAGE
+        string $message = self::DEFAULT_SUCCESS_MESSAGE,
+        int $status = 200,
     ): JsonResponse {
         return $this->respond(
             success: true,
             message: $message,
             data: $data,
+            status: $status,
         );
     }
 

@@ -4,15 +4,12 @@ namespace App\Exceptions;
 
 use App\Traits\ApiResponse;
 use Illuminate\Auth\AuthenticationException;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
 use PHPOpenSourceSaver\JWTAuth\Exceptions\JWTException;
 use PHPOpenSourceSaver\JWTAuth\Exceptions\TokenExpiredException;
 use PHPOpenSourceSaver\JWTAuth\Exceptions\TokenInvalidException;
-use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
-use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Throwable;
 
 class ApiExceptionHandler
@@ -24,7 +21,6 @@ class ApiExceptionHandler
      */
     public function handle(Throwable $exception): JsonResponse
     {
-
         return match (true) {
 
             // Validation
@@ -35,36 +31,18 @@ class ApiExceptionHandler
             $exception instanceof AuthenticationException
             => $this->unauthenticated(),
 
-            // Authorization from AuthorizationException()
-            $exception instanceof AccessDeniedHttpException
-            => $this->forbidden(),
-
-            // Eloquent from ModelNotFoundException()
-            $exception instanceof NotFoundHttpException &&
-                $exception->getPrevious() instanceof ModelNotFoundException
-            => $this->modelNotFound(),
-
-            // Route
-            $exception instanceof NotFoundHttpException
-            => $this->routeNotFound(),
-
-            // HTTP Method
-            $exception instanceof MethodNotAllowedHttpException
-            => $this->methodNotAllowed(),
-
-            // JWT
             $exception instanceof TokenExpiredException
-            => $this->tokenExpired(),
+            => $this->jwt('Token expired.'),
 
             $exception instanceof TokenInvalidException
-            => $this->tokenInvalid(),
+            => $this->jwt('Token invalid.'),
 
             $exception instanceof JWTException
-            => $this->tokenMissing(),
+            => $this->jwt('Authentication token error.'),
 
             // Fallback
             default
-            => $this->internalServerError($exception),
+            => $this->exception($exception),
         };
     }
 
@@ -86,67 +64,44 @@ class ApiExceptionHandler
         );
     }
 
-    private function forbidden(): JsonResponse
+    private function jwt(string $message): JsonResponse
     {
         return $this->error(
-            message: 'You are not authorized to perform this action.',
-            status: 403,
-        );
-    }
-
-    private function modelNotFound(): JsonResponse
-    {
-        return $this->error(
-            message: 'Resource not found.',
-            status: 404,
-        );
-    }
-
-    private function routeNotFound(): JsonResponse
-    {
-        return $this->error(
-            message: 'Route not found.',
-            status: 404,
-        );
-    }
-
-    private function methodNotAllowed(): JsonResponse
-    {
-        return $this->error(
-            message: 'Method not allowed.',
-            status: 405,
-        );
-    }
-
-    private function tokenExpired(): JsonResponse
-    {
-        return $this->error(
-            message: 'Token expired.',
+            message: $message,
             status: 401,
         );
     }
 
-    private function tokenInvalid(): JsonResponse
+    private function exception(Throwable $exception): JsonResponse
     {
+        $status = match (true) {
+            $exception instanceof HttpExceptionInterface
+            => $exception->getStatusCode(),
+
+            default => 500,
+        };
+
         return $this->error(
-            message: 'Token invalid.',
-            status: 401,
+            message: $this->message($exception, $status),
+            status: $status,
         );
     }
 
-    private function tokenMissing(): JsonResponse
+    private function message(Throwable $exception, int $status): string
     {
-        return $this->error(
-            message: 'Authentication token error.',
-            status: 401,
-        );
-    }
+        if (app()->hasDebugModeEnabled()) {
+            return $exception->getMessage();
+        }
 
-    private function internalServerError(Throwable $exception): JsonResponse
-    {
-        return $this->error(
-            message: config('app.debug') ? $exception->getMessage() : 'Internal server error.',
-            status: 500,
-        );
+        return match ($status) {
+            401 => 'Unauthenticated.',
+            403 => 'You are not authorized to perform this action.',
+            404 => 'Not Found',
+            405 => 'Method Not Allowed',
+            429 => 'Too Many Requests',
+            default => $status >= 500
+                ? 'Internal Server Error'
+                : $exception->getMessage(),
+        };
     }
 }
