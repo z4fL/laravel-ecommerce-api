@@ -23,4 +23,19 @@ enum UserRole: string
             self::CUSTOMER => $requiredRole === self::CUSTOMER,
         };
     }
+
+    public function isAdmin(): bool
+    {
+        return $this === self::ADMIN;
+    }
+
+    public function isSeller(): bool
+    {
+        return $this === self::SELLER;
+    }
+
+    public function isCustomer(): bool
+    {
+        return $this === self::CUSTOMER;
+    }
 }
