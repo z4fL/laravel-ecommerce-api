@@ -27,7 +27,7 @@ class CartValidationService
         string $message
     ): void {
         $result['errors'][] = [
-            'cart_item_id' => $cartItemId,
+            'id' => $cartItemId,
             'code' => $code,
             'message' => $message,
         ];
@@ -37,9 +37,21 @@ class CartValidationService
     {
         $cart->loadMissing('cartItems.product');
 
+        $cartItems = $cart->cartItems;
+
+        if ($cartItems->isEmpty()) {
+            $result['errors'][] = [
+                'code' => 'EMPTY_CART',
+                'message' => 'Cart is empty.',
+            ];
+            $result['valid'] = false;
+
+            return $result;
+        }
+
         $result = $this->makeResult();
 
-        foreach ($cart->cartItems as $cartItem) {
+        foreach ($cartItems as $cartItem) {
             $product = $cartItem->product;
 
             if ($product->status === ProductStatus::DRAFT) {
@@ -79,7 +91,7 @@ class CartValidationService
             $subtotal = $product->price * $cartItem->quantity;
 
             $result['items'][] = [
-                'cart_item_id' => $cartItem->id,
+                'id' => $cartItem->id,
                 'product_id' => $product->id,
                 'quantity' => $cartItem->quantity,
                 'unit_price' => $product->price,
