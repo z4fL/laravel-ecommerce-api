@@ -93,6 +93,8 @@ class CartValidationService
             $result['items'][] = [
                 'id' => $cartItem->id,
                 'product_id' => $product->id,
+                'product_sku' => $product->sku,
+                'product_name' => $product->name,
                 'quantity' => $cartItem->quantity,
                 'unit_price' => $product->price,
                 'subtotal' => $subtotal,

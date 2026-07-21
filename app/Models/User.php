@@ -58,6 +58,11 @@ class User extends Authenticatable implements JWTSubject
         return $this->hasMany(ShippingAddress::class);
     }
 
+    public function orders(): HasMany
+    {
+        return $this->hasMany(Order::class);
+    }
+
     /**
      * Get the identifier that will be stored in the JWT token.
      */

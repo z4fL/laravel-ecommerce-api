@@ -17,6 +17,8 @@ class CheckoutItemResource extends JsonResource
         return [
             'id' => $this['id'],
             'product_id' => $this['product_id'],
+            'product_sku' => $this['product_sku'],
+            'product_name' => $this['product_name'],
             'quantity' => $this['quantity'],
             'unit_price' => $this['unit_price'],
             'subtotal' => $this['subtotal'],
