@@ -26,6 +26,7 @@ Route::middleware('auth:api')->group(function () {
 
     Route::post('/checkout', [CheckoutController::class, 'preview']);
 
+    Route::get('/orders', [OrderController::class, 'index']);
     Route::post('/orders', [OrderController::class, 'store']);
 });
 
