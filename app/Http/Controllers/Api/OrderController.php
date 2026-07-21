@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\OrderIndexRequest;
 use App\Models\Order;
 use App\Http\Requests\StoreOrderRequest;
 use App\Http\Requests\UpdateOrderRequest;
@@ -20,9 +21,22 @@ class OrderController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(OrderIndexRequest $request)
     {
-        //
+        $user = $request->user('api');
+
+        $perPage = $request->integer('per_page', 10);
+
+        $orders = Order::query()
+            ->where('user_id', $user->id)
+            ->withCount('orderItems')
+            ->latest()
+            ->paginate($perPage);
+
+        return $this->pagination(
+            paginator: $orders,
+            data: OrderResource::collection($orders)
+        );
     }
 
     /**
