@@ -7,9 +7,11 @@ use App\Http\Requests\OrderIndexRequest;
 use App\Models\Order;
 use App\Http\Requests\StoreOrderRequest;
 use App\Http\Requests\UpdateOrderRequest;
+use App\Http\Resources\OrderItemResource;
 use App\Http\Resources\OrderResource;
 use App\Models\ShippingAddress;
 use App\Services\OrderService;
+use Illuminate\Support\Facades\Gate;
 
 class OrderController extends Controller
 {
@@ -60,7 +62,15 @@ class OrderController extends Controller
      */
     public function show(Order $order)
     {
-        //
+        Gate::authorize('view', $order);
+
+        return $this->success(
+            new OrderResource(
+                $order
+                    ->load('orderItems')
+                    ->loadCount('orderItems')
+            )
+        );
     }
 
     /**
