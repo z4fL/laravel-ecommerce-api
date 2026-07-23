@@ -7,7 +7,6 @@ use App\Http\Requests\OrderIndexRequest;
 use App\Models\Order;
 use App\Http\Requests\StoreOrderRequest;
 use App\Http\Requests\UpdateOrderRequest;
-use App\Http\Resources\OrderItemResource;
 use App\Http\Resources\OrderResource;
 use App\Models\ShippingAddress;
 use App\Services\OrderService;
@@ -84,8 +83,15 @@ class OrderController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Order $order)
+    public function cancel(Order $order)
     {
-        //
+        Gate::authorize('cancel', $order);
+
+        $order = $this->orderService->cancel($order);
+
+        return $this->success(new OrderResource(
+            $order->load('orderItems')
+                ->loadCount('orderItems')
+        ));
     }
 }

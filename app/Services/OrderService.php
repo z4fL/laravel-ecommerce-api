@@ -19,6 +19,15 @@ class OrderService
         private readonly CartValidationService $cartValidationService
     ) {}
 
+    private function generateOrderNumber(): string
+    {
+        return sprintf(
+            'ORD-%s-%s',
+            now()->format('Ymd'),
+            Str::upper(Str::random(6))
+        );
+    }
+
     public function create(User $user, ShippingAddress $shippingAddress): Order
     {
         $cart = $user->cart()->with('cartItems.product')->firstOrFail();
@@ -71,12 +80,20 @@ class OrderService
         return $order;
     }
 
-    private function generateOrderNumber(): string
+    public function cancel(Order $order): Order
     {
-        return sprintf(
-            'ORD-%s-%s',
-            now()->format('Ymd'),
-            Str::upper(Str::random(6))
-        );
+        if (!$order->status->canTransitionTo(OrderStatus::CANCELLED)) {
+            throw ValidationException::withMessages([
+                'order' => 'This order can no longer be cancelled.'
+            ]);
+        }
+
+        $order->status = OrderStatus::CANCELLED;
+        $order->save();
+
+
+        $order->refresh();
+
+        return $order;
     }
 }

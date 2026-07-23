@@ -65,4 +65,14 @@ class OrderPolicy
     {
         return false;
     }
+
+    /**
+     * Determine whether the user can delete the model.
+     */
+    public function cancel(User $user, Order $order): Response
+    {
+        return $user->is($order->user)
+            ? Response::allow()
+            : Response::denyAsNotFound();
+    }
 }
