@@ -10,7 +10,7 @@ use App\Http\Controllers\Api\StoreController;
 use App\Http\Controllers\Api\TagController;
 use App\Http\Controllers\Api\CheckoutController;
 use App\Http\Controllers\Api\OrderController;
-use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\Api\PaymentController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth:api')->group(function () {
@@ -31,8 +31,9 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/orders', [OrderController::class, 'store']);
     Route::get('/orders/{order}', [OrderController::class, 'show']);
     Route::post('/orders/{order}/cancel', [OrderController::class, 'cancel']);
+
+    Route::post('/orders/{order}/payment', [PaymentController::class, 'store']);
 });
-Route::post('/payment/test', [PaymentController::class, 'store']);
 
 Route::middleware(['auth:api', 'role:admin'])->group(function () {
     Route::apiResource('categories', CategoryController::class)
