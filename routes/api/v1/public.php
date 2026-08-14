@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\StoreController;
 use App\Http\Controllers\Api\TagController;
+use App\Http\Controllers\Api\WebhookController;
 use Illuminate\Support\Facades\Route;
 
 // Authentication
@@ -32,3 +33,6 @@ Route::prefix('stores')->group(function () {
     Route::get('/{store}', [StoreController::class, 'show']);
     Route::get('/{store}/products', [StoreController::class, 'showProducts']);
 });
+
+// Webhook
+Route::post('/webhook/payment/{gateway}', [WebhookController::class, 'handle']);

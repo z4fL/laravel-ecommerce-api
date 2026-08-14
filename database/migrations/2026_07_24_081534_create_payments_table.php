@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('order_id')->constrained()->cascadeOnDelete();
 
             $table->string('gateway');
+            $table->string('gateway_order_id')->nullable()->unique();
             $table->string('gateway_transaction_id')->nullable()->unique();
             $table->string('payment_method')->nullable();
             $table->string('status');
