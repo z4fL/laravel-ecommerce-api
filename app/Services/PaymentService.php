@@ -50,6 +50,7 @@ class PaymentService
             }
 
             $payment->update([
+                'gateway_transaction_id' => $response['transaction_id'],
                 'payment_url' => $response['redirect_url'],
                 'expired_at' => now()->addMinutes(29),
                 'metadata' => [
