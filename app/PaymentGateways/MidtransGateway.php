@@ -3,12 +3,15 @@
 namespace App\PaymentGateways;
 
 use App\Contracts\PaymentGatewayInterface;
+use App\Contracts\PaymentWebhookInterface;
 use App\Models\Payment;
 use BadMethodCallException;
+use Illuminate\Http\Request;
 use Midtrans\Config;
 use Midtrans\Snap;
+use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 
-class MidtransGateway implements PaymentGatewayInterface
+class MidtransGateway implements PaymentGatewayInterface, PaymentWebhookInterface
 {
     /**
      * Create a new class instance.
@@ -44,7 +47,7 @@ class MidtransGateway implements PaymentGatewayInterface
 
         $payload = [
             'transaction_details' => [
-                'order_id' => $payment->gateway_transaction_id,
+                'order_id' => $payment->gateway_order_id,
                 'gross_amount' => $payment->amount
             ],
             'customer_details' => [
@@ -100,5 +103,58 @@ class MidtransGateway implements PaymentGatewayInterface
         throw new BadMethodCallException(
             'cancelTransaction is not implemented yet.'
         );
+    }
+
+    public function verify(Request $request): void
+    {
+        $payload = $request->all();
+
+        $orderId = $payload['order_id'] ?? null;
+        $statusCode = $payload['status_code'] ?? null;
+        $grossAmount = $payload['gross_amount'] ?? null;
+        $signatureKey = $payload['signature_key'] ?? null;
+
+        if (
+            $orderId === null ||
+            $statusCode === null ||
+            $grossAmount === null ||
+            $signatureKey === null
+        ) {
+            throw new UnauthorizedHttpException(
+                'Bearer',
+                'Invalid webhook signature.'
+            );
+        }
+
+        $expectedSignature = hash(
+            'sha512',
+            $orderId
+                . $statusCode
+                . $grossAmount
+                . config('payment.midtrans.server_key')
+        );
+
+        if (! hash_equals($expectedSignature, $signatureKey)) {
+            throw new UnauthorizedHttpException(
+                'Bearer',
+                'Invalid webhook signature.'
+            );
+        }
+    }
+
+    public function normalize(Request $request): array
+    {
+        $payload = $request->all();
+
+        return [
+            'gateway' => 'midtrans',
+            'transaction_id' => $payload['transaction_id'],
+            'order_id' => $payload['order_id'],
+            'status' => $payload['transaction_status'],
+            'payment_type' => $payload['payment_type'] ?? null,
+            'gross_amount' => $payload['gross_amount'],
+            'currency' => $payload['currency'] ?? null,
+            'raw_payload' => $payload,
+        ];
     }
 }

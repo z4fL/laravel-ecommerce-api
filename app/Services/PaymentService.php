@@ -13,9 +13,7 @@ use Illuminate\Support\Str;
 
 class PaymentService
 {
-    /**
-     * Create a new class instance.
-     */
+
     public function __construct(
         private readonly PaymentGatewayInterface $paymentGateway,
     ) {}
@@ -32,7 +30,7 @@ class PaymentService
             $payment = Payment::create([
                 'order_id' => $order->id,
                 'gateway' => config('payment.default'),
-                'gateway_transaction_id' => (string) Str::ulid(),
+                'gateway_order_id' => (string) Str::ulid(),
                 'status' => PaymentStatus::PENDING,
                 'amount' => $order->total,
             ]);

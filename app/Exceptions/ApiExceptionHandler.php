@@ -28,8 +28,8 @@ class ApiExceptionHandler
             => $this->validation($exception),
 
             // Authentication
-            $exception instanceof AuthenticationException
-            => $this->unauthenticated(),
+            // $exception instanceof AuthenticationException
+            // => $this->unauthenticated(),
 
             $exception instanceof TokenExpiredException
             => $this->jwt('Token expired.'),

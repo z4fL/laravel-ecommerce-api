@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'order_id',
 
     'gateway',
+    'gateway_order_id',
     'gateway_transaction_id',
     'payment_method',
     'status',
