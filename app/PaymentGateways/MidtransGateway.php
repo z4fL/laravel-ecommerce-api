@@ -4,9 +4,11 @@ namespace App\PaymentGateways;
 
 use App\Contracts\PaymentGatewayInterface;
 use App\Contracts\PaymentWebhookInterface;
+use App\Enum\PaymentOutcome;
 use App\Models\Payment;
 use BadMethodCallException;
 use Illuminate\Http\Request;
+use InvalidArgumentException;
 use Midtrans\Config;
 use Midtrans\Snap;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
@@ -156,5 +158,26 @@ class MidtransGateway implements PaymentGatewayInterface, PaymentWebhookInterfac
             'currency' => $payload['currency'] ?? null,
             'raw_payload' => $payload,
         ];
+    }
+
+    public function determineOutcome(string $status): PaymentOutcome
+    {
+        return match ($status) {
+            'pending' => PaymentOutcome::PENDING,
+
+            'capture',
+            'settlement' => PaymentOutcome::SUCCESS,
+
+            'deny',
+            'failure' => PaymentOutcome::FAILED,
+
+            'expire' => PaymentOutcome::EXPIRED,
+
+            'cancel' => PaymentOutcome::CANCELLED,
+
+            default => throw new InvalidArgumentException(
+                "Unsupported Midtrans transaction status: {$status}"
+            ),
+        };
     }
 }
