@@ -1,22 +1,22 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Order;
 
 use App\Enum\OrderStatus;
+use App\Enum\OrderStatusTransition;
 use App\Models\Order;
 use App\Models\ShippingAddress;
 use App\Models\User;
+use App\Services\CartValidationService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class OrderService
 {
-    /**
-     * Create a new class instance.
-     */
     public function __construct(
-        private readonly CartValidationService $cartValidationService
+        private readonly CartValidationService $cartValidationService,
+        private readonly OrderStatusService $orderStatusService
     ) {}
 
     private function generateOrderNumber(): string
@@ -82,14 +82,16 @@ class OrderService
 
     public function cancel(Order $order): Order
     {
-        if (!$order->status->canTransitionTo(OrderStatus::CANCELLED)) {
+        $transition = $this->orderStatusService->update(
+            $order,
+            OrderStatus::CANCELLED,
+        );
+
+        if ($transition === OrderStatusTransition::CONFLICT) {
             throw ValidationException::withMessages([
-                'order' => 'This order can no longer be cancelled.'
+                'order' => 'This order can no longer be cancelled.',
             ]);
         }
-
-        $order->status = OrderStatus::CANCELLED;
-        $order->save();
 
 
         $order->refresh();

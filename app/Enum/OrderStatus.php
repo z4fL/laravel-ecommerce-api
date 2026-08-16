@@ -12,7 +12,7 @@ enum OrderStatus: string
 
     case SHIPPED = 'shipped'; // The item is moving through the carrier's network.
 
-    case DELIVERED = 'delivered'; // The package has arrived at the customer address.
+    // case DELIVERED = 'delivered'; // The package has arrived at the customer address.
 
     case COMPLETED = 'completed'; // The full order lifecycle is finished and closed.
 
