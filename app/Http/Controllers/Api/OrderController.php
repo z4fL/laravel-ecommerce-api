@@ -6,10 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\OrderIndexRequest;
 use App\Models\Order;
 use App\Http\Requests\StoreOrderRequest;
-use App\Http\Requests\UpdateOrderRequest;
 use App\Http\Resources\OrderResource;
 use App\Models\ShippingAddress;
-use App\Services\OrderService;
+use App\Services\Order\OrderService;
 use Illuminate\Support\Facades\Gate;
 
 class OrderController extends Controller
@@ -72,13 +71,6 @@ class OrderController extends Controller
         );
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(UpdateOrderRequest $request, Order $order)
-    {
-        //
-    }
 
     /**
      * Remove the specified resource from storage.

@@ -3,13 +3,23 @@
 namespace App\Services\Payment;
 
 use App\DataTransferObjects\PaymentEventResult;
+use App\Enum\OrderStatus;
+use App\Enum\OrderStatusTransition;
 use App\Enum\PaymentOutcome;
 use App\Enum\PaymentStatus;
 use App\Enum\PaymentStatusTransition;
 use App\Models\Payment;
+use App\Services\Order\OrderStatusService;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class PaymentStatusService
 {
+
+    public function __construct(
+        private readonly OrderStatusService $orderStatusService,
+    ) {}
+
     /**
      * @var array<string, array<int, PaymentStatus>>
      */
@@ -24,37 +34,47 @@ class PaymentStatusService
 
     public function update(PaymentEventResult $result): PaymentStatusTransition
     {
-        $payment = Payment::findOrFail($result->paymentId);
+        return DB::transaction(function () use ($result) {
 
-        $targetStatus = $this->determineTargetStatus(
-            $result->outcome,
-        );
+            $payment = Payment::query()
+                ->with('order')
+                ->findOrFail($result->paymentId);
 
-        $transition = $this->determineTransition(
-            $payment->status,
-            $targetStatus,
-        );
+            $targetStatus = $this->determineTargetStatus(
+                $result->outcome,
+            );
 
-        if ($transition !== PaymentStatusTransition::TRANSITIONED) {
+            $transition = $this->determineTransition(
+                $payment->status,
+                $targetStatus,
+            );
+
+            if ($transition !== PaymentStatusTransition::TRANSITIONED) {
+                return $transition;
+            }
+
+            $this->persistTransition($payment, $targetStatus);
+
+            if ($targetStatus === PaymentStatus::PAID) {
+                $this->updateOrderStatus($payment);
+            }
+
             return $transition;
-        }
-
-        $this->persistTransition($payment, $targetStatus);
-
-        return $transition;
+        });
     }
 
-    private function persistTransition(
-        Payment $payment,
-        PaymentStatus $targetStatus,
-    ): void {
-        $payment->status = $targetStatus;
+    private function updateOrderStatus(Payment $payment): void
+    {
+        $transition = $this->orderStatusService->update(
+            $payment->order,
+            OrderStatus::PAID,
+        );
 
-        if ($targetStatus === PaymentStatus::PAID) {
-            $payment->paid_at = now();
+        if ($transition === OrderStatusTransition::CONFLICT) {
+            throw ValidationException::withMessages([
+                'order' => 'Order status cannot be updated to paid.',
+            ]);
         }
-
-        $payment->save();
     }
 
     private function determineTargetStatus(
@@ -93,5 +113,18 @@ class PaymentStatusService
             self::ALLOWED_TRANSITIONS[$current->value] ?? [],
             true,
         );
+    }
+
+        private function persistTransition(
+        Payment $payment,
+        PaymentStatus $targetStatus,
+    ): void {
+        $payment->status = $targetStatus;
+
+        if ($targetStatus === PaymentStatus::PAID) {
+            $payment->paid_at = now();
+        }
+
+        $payment->save();
     }
 }
