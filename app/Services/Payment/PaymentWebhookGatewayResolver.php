@@ -3,6 +3,7 @@
 namespace App\Services\Payment;
 
 use App\Contracts\PaymentWebhookInterface;
+use App\Exceptions\UnsupportedPaymentGatewayException;
 use App\PaymentGateways\MidtransGateway;
 use InvalidArgumentException;
 
@@ -13,9 +14,7 @@ class PaymentWebhookGatewayResolver
         return match ($gateway) {
             'midtrans' => app(MidtransGateway::class),
 
-            default => throw new InvalidArgumentException(
-                'Unsupported webhook gateway.'
-            ),
+            default => throw new UnsupportedPaymentGatewayException($gateway),
         };
     }
 }

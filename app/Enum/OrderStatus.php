@@ -5,6 +5,7 @@ namespace App\Enum;
 enum OrderStatus: string
 {
     case PENDING_PAYMENT = 'pending_payment'; // The order has been created, but payment is still required.
+    case PAYMENT_FAILED = 'payment_failed'; // The order has been failed, because payment is cant be created.
 
     case PAID = 'paid'; // Payment is confirmed and accepted.
 

@@ -3,7 +3,6 @@
 namespace App\Exceptions;
 
 use App\Traits\ApiResponse;
-use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
 use PHPOpenSourceSaver\JWTAuth\Exceptions\JWTException;
@@ -27,9 +26,9 @@ class ApiExceptionHandler
             $exception instanceof ValidationException
             => $this->validation($exception),
 
-            // Authentication
-            // $exception instanceof AuthenticationException
-            // => $this->unauthenticated(),
+            // Unsupported gateway
+            $exception instanceof UnsupportedPaymentGatewayException
+            => $this->paymentGateway($exception),
 
             $exception instanceof TokenExpiredException
             => $this->jwt('Token expired.'),
@@ -56,11 +55,11 @@ class ApiExceptionHandler
         );
     }
 
-    private function unauthenticated(): JsonResponse
+    private function paymentGateway(): JsonResponse
     {
         return $this->error(
-            message: 'Unauthenticated.',
-            status: 401,
+            message: 'Unsupported webhook gateway.',
+            status: 400,
         );
     }
 

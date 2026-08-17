@@ -21,18 +21,18 @@ class WebhookController extends Controller
 
         $webhookGateway = $resolver->resolve($gateway);
 
-        $webhookGateway->verify($request);
-
-        $normalized = $gateway->normalize($request);
-
         Log::info('Payment webhook received', [
             'gateway' => $gateway,
-            'gateway_order_id' => $normalized['order_id'] ?? null,
-            'gateway_transaction_id' => $normalized['transaction_id'] ?? null,
-            'status' => $normalized['status'] ?? null,
+            'gateway_order_id' => $request['order_id'] ?? null,
+            'gateway_transaction_id' => $request['transaction_id'] ?? null,
+            'status' => $request['transaction_status'] ?? null,
         ]);
 
-        $result = $processor->process($normalized);
+        $webhookGateway->verify($request);
+
+        $normalized = $webhookGateway->normalize($request);
+
+        $result = $processor->process($normalized, $webhookGateway);
 
         Log::info('Payment event processed', [
             'payment_id' => $result->paymentId,

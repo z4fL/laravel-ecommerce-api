@@ -19,27 +19,24 @@ class OrderStatusService
         );
 
         if ($transition === OrderStatusTransition::IDEMPOTENT) {
-            $this->logTransition(
+            Log::info(
                 'Order status transition idempotent',
                 [
                     'order_id' => $order->id,
                     'status' => $currentStatus->value,
-                ],
-                'info',
+                ]
             );
-
             return $transition;
         }
 
         if ($transition === OrderStatusTransition::CONFLICT) {
-            $this->logTransition(
+            Log::warning(
                 'Order status transition conflict',
                 [
                     'order_id' => $order->id,
                     'current_status' => $currentStatus->value,
                     'requested_status' => $targetStatus->value,
-                ],
-                'warning',
+                ]
             );
 
             return $transition;
@@ -49,14 +46,13 @@ class OrderStatusService
 
         $this->persistTransition($order, $targetStatus);
 
-        $this->logTransition(
+        Log::info(
             'Order status transitioned',
             [
                 'order_id' => $order->id,
                 'from' => $previousStatus->value,
                 'to' => $targetStatus->value,
-            ],
-            'info',
+            ]
         );
 
         return $transition;
@@ -83,15 +79,5 @@ class OrderStatusService
     ): void {
         $order->status = $targetStatus;
         $order->save();
-    }
-
-    private function logTransition(string $message, array $context, string $level): void
-    {
-        match ($level) {
-            'info' => Log::info($message, $context),
-            'warning' => Log::warning($message, $context),
-            'error' => Log::error($message, $context),
-            default => Log::info($message, $context),
-        };
     }
 }
