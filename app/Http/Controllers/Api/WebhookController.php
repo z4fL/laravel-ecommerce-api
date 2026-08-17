@@ -7,6 +7,7 @@ use App\Http\Requests\Webhook\PaymentWebhookRequest;
 use App\Services\Payment\PaymentEventProcessor;
 use App\Services\Payment\PaymentStatusService;
 use App\Services\Payment\PaymentWebhookGatewayResolver;
+use Illuminate\Support\Facades\Log;
 
 class WebhookController extends Controller
 {
@@ -22,9 +23,21 @@ class WebhookController extends Controller
 
         $webhookGateway->verify($request);
 
-        $result = $processor->process(
-            $webhookGateway->normalize($request)
-        );
+        $normalized = $gateway->normalize($request);
+
+        Log::info('Payment webhook received', [
+            'gateway' => $gateway,
+            'gateway_order_id' => $normalized['order_id'] ?? null,
+            'gateway_transaction_id' => $normalized['transaction_id'] ?? null,
+            'status' => $normalized['status'] ?? null,
+        ]);
+
+        $result = $processor->process($normalized);
+
+        Log::info('Payment event processed', [
+            'payment_id' => $result->paymentId,
+            'outcome' => $result->outcome->value,
+        ]);
 
         $transition = $statusService->update($result);
 

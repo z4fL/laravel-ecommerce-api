@@ -8,6 +8,7 @@ use App\Models\Order;
 use App\Models\Payment;
 use App\Enum\PaymentStatus;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Str;
 
@@ -35,6 +36,14 @@ class PaymentService
                 'amount' => $order->total,
             ]);
 
+            Log::info('Payment gateway request sent', [
+                'payment_id' => $payment->id,
+                'order_id' => $payment->order_id,
+                'gateway' => $payment->gateway,
+                'gateway_order_id' => $payment->gateway_order_id,
+                'amount' => $payment->amount,
+            ]);
+
             $response = $this->paymentGateway->createTransaction(
                 $payment->load(['order.orderItems', 'order.user'])
             );
@@ -42,6 +51,15 @@ class PaymentService
             $errorMessages = data_get($response, 'error_messages');
 
             if (! empty($errorMessages)) {
+                Log::error('Payment gateway request failed', [
+                    'payment_id' => $payment->id,
+                    'order_id' => $payment->order_id,
+                    'gateway' => $payment->gateway,
+                    'error' => is_array($errorMessages)
+                        ? implode(' ', $errorMessages)
+                        : (string) $errorMessages,
+                ]);
+
                 throw ValidationException::withMessages([
                     'payment' => is_array($errorMessages)
                         ? implode(' ', $errorMessages)

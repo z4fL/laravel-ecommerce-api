@@ -5,21 +5,59 @@ namespace App\Services\Order;
 use App\Enum\OrderStatus;
 use App\Enum\OrderStatusTransition;
 use App\Models\Order;
+use Illuminate\Support\Facades\Log;
 
 class OrderStatusService
 {
     public function update(Order $order, OrderStatus $targetStatus): OrderStatusTransition
     {
+        $currentStatus = $order->status;
+
         $transition = $this->determineTransition(
-            $order->status,
+            $currentStatus,
             $targetStatus,
         );
 
-        if ($transition !== OrderStatusTransition::TRANSITIONED) {
+        if ($transition === OrderStatusTransition::IDEMPOTENT) {
+            $this->logTransition(
+                'Order status transition idempotent',
+                [
+                    'order_id' => $order->id,
+                    'status' => $currentStatus->value,
+                ],
+                'info',
+            );
+
             return $transition;
         }
 
+        if ($transition === OrderStatusTransition::CONFLICT) {
+            $this->logTransition(
+                'Order status transition conflict',
+                [
+                    'order_id' => $order->id,
+                    'current_status' => $currentStatus->value,
+                    'requested_status' => $targetStatus->value,
+                ],
+                'warning',
+            );
+
+            return $transition;
+        }
+
+        $previousStatus = $order->status;
+
         $this->persistTransition($order, $targetStatus);
+
+        $this->logTransition(
+            'Order status transitioned',
+            [
+                'order_id' => $order->id,
+                'from' => $previousStatus->value,
+                'to' => $targetStatus->value,
+            ],
+            'info',
+        );
 
         return $transition;
     }
@@ -45,5 +83,15 @@ class OrderStatusService
     ): void {
         $order->status = $targetStatus;
         $order->save();
+    }
+
+    private function logTransition(string $message, array $context, string $level): void
+    {
+        match ($level) {
+            'info' => Log::info($message, $context),
+            'warning' => Log::warning($message, $context),
+            'error' => Log::error($message, $context),
+            default => Log::info($message, $context),
+        };
     }
 }
