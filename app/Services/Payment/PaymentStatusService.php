@@ -11,41 +11,30 @@ use App\Enum\PaymentStatusTransition;
 use App\Models\Payment;
 use App\Services\Order\OrderStatusService;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class PaymentStatusService
 {
-
     public function __construct(
         private readonly OrderStatusService $orderStatusService,
     ) {}
 
-    /**
-     * @var array<string, array<int, PaymentStatus>>
-     */
-    private const ALLOWED_TRANSITIONS = [
-        PaymentStatus::PENDING->value => [
-            PaymentStatus::PAID,
-            PaymentStatus::FAILED,
-            PaymentStatus::EXPIRED,
-            PaymentStatus::CANCELLED,
-        ],
-    ];
-
     public function update(PaymentEventResult $result): PaymentStatusTransition
     {
         return DB::transaction(function () use ($result) {
-
             $payment = Payment::query()
                 ->with('order')
+                ->lockForUpdate()
                 ->findOrFail($result->paymentId);
 
-            $targetStatus = $this->determineTargetStatus(
-                $result->outcome,
-            );
+            $targetStatus = $this->determineTargetStatus($result->outcome);
+
+            $currentStatus = $payment->status;
 
             $transition = $this->determineTransition(
-                $payment->status,
+                $payment,
+                $currentStatus,
                 $targetStatus,
             );
 
@@ -53,7 +42,25 @@ class PaymentStatusService
                 return $transition;
             }
 
+            $this->persistEventData($payment, $result);
+
+            if ($transition === PaymentStatusTransition::IDEMPOTENT) {
+                return $transition;
+            }
+
+            $previousStatus = $payment->status;
+
             $this->persistTransition($payment, $targetStatus);
+
+            Log::info(
+                'Payment status transitioned',
+                [
+                    'payment_id' => $payment->id,
+                    'order_id' => $payment->order_id,
+                    'from' => $previousStatus->value,
+                    'to' => $targetStatus->value,
+                ]
+            );
 
             if ($targetStatus === PaymentStatus::PAID) {
                 $this->updateOrderStatus($payment);
@@ -61,6 +68,34 @@ class PaymentStatusService
 
             return $transition;
         });
+    }
+
+    private function persistEventData(
+        Payment $payment,
+        PaymentEventResult $result,
+    ): void {
+        if (
+            $payment->gateway_transaction_id === null
+            && $result->gatewayTransactionId !== null
+        ) {
+            $payment->gateway_transaction_id = $result->gatewayTransactionId;
+        }
+
+        if (
+            $payment->payment_method === null
+            && $result->paymentMethod !== null
+        ) {
+            $payment->payment_method = $result->paymentMethod;
+        }
+
+        if (
+            $payment->metadata === null
+            && $result->metadata !== null
+        ) {
+            $payment->metadata = $result->metadata;
+        }
+
+        $payment->save();
     }
 
     private function updateOrderStatus(Payment $payment): void
@@ -77,9 +112,8 @@ class PaymentStatusService
         }
     }
 
-    private function determineTargetStatus(
-        PaymentOutcome $outcome,
-    ): PaymentStatus {
+    private function determineTargetStatus(PaymentOutcome $outcome): PaymentStatus
+    {
         return match ($outcome) {
             PaymentOutcome::PENDING => PaymentStatus::PENDING,
             PaymentOutcome::SUCCESS => PaymentStatus::PAID,
@@ -90,34 +124,43 @@ class PaymentStatusService
     }
 
     private function determineTransition(
+        Payment $payment,
         PaymentStatus $current,
         PaymentStatus $target,
     ): PaymentStatusTransition {
         if ($current === $target) {
+            Log::info(
+                'Payment status transition idempotent',
+                [
+                    'payment_id' => $payment->id,
+                    'order_id' => $payment->order_id,
+                    'status' => $current->value,
+                ]
+            );
+
             return PaymentStatusTransition::IDEMPOTENT;
         }
 
-        if ($this->canTransition($current, $target)) {
+        if ($current->canTransitionTo($target)) {
             return PaymentStatusTransition::TRANSITIONED;
         }
+
+        Log::warning(
+            'Payment status transition conflict',
+            [
+                'payment_id' => $payment->id,
+                'order_id' => $payment->order_id,
+                'current_status' => $current->value,
+                'requested_status' => $target->value,
+            ]
+        );
 
         return PaymentStatusTransition::CONFLICT;
     }
 
-    private function canTransition(
-        PaymentStatus $current,
-        PaymentStatus $target,
-    ): bool {
-        return in_array(
-            $target,
-            self::ALLOWED_TRANSITIONS[$current->value] ?? [],
-            true,
-        );
-    }
-
-        private function persistTransition(
+    private function persistTransition(
         Payment $payment,
-        PaymentStatus $targetStatus,
+        PaymentStatus $targetStatus
     ): void {
         $payment->status = $targetStatus;
 

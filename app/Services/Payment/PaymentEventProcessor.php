@@ -9,18 +9,12 @@ use Illuminate\Validation\ValidationException;
 
 class PaymentEventProcessor
 {
-    /**
-     * Create a new class instance.
-     */
-    public function __construct(
-        private readonly PaymentWebhookInterface $paymentWebhook,
-    ) {}
 
-    public function process(array $event): PaymentEventResult
+    public function process(array $event, PaymentWebhookInterface $gateway): PaymentEventResult
     {
         $payment = Payment::query()
             ->where('gateway', $event['gateway'])
-            ->where('gateway_transaction_id', $event['transaction_id'])
+            ->where('gateway_order_id', $event['order_id'])
             ->first();
 
         if (! $payment) {
@@ -41,13 +35,19 @@ class PaymentEventProcessor
             ]);
         }
 
-        $outcome = $this->paymentWebhook->determineOutcome(
+        $outcome = $gateway->determineOutcome(
             $event['status']
         );
 
         return new PaymentEventResult(
             paymentId: $payment->id,
             outcome: $outcome,
+            gatewayTransactionId: $event['transaction_id'],
+            paymentMethod: $event['payment_type'],
+            metadata: [
+                'currency' => $event['currency'],
+                'raw_payload' => $event['raw_payload'],
+            ],
         );
     }
 }
