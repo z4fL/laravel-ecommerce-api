@@ -5,6 +5,7 @@ namespace Tests\Feature\Services;
 use App\Models\Product;
 use App\Services\InventoryService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
@@ -125,26 +126,50 @@ class InventoryServiceTest extends TestCase
             );
         }
 
+        /*
+         * The concurrency test cannot run while RefreshDatabase keeps
+         * the test inside an uncommitted transaction.
+         *
+         * Commit the fixture before creating child processes.
+         */
+        $this->commitTestingTransaction();
+
         $product = Product::factory()->create([
             'stock' => 1,
         ]);
 
-        $resultDirectory = storage_path('framework/testing/inventory');
+        $productId = $product->getKey();
 
-        if (! is_dir($resultDirectory)) {
-            mkdir($resultDirectory, 0777, true);
+        DB::connection()->commit();
+
+        $directory = storage_path('framework/testing/inventory');
+
+        if (! is_dir($directory)) {
+            mkdir($directory, 0777, true);
         }
 
         $runId = uniqid('inventory-', true);
 
-        $resultFiles = [
-            $resultDirectory . "/{$runId}-a.json",
-            $resultDirectory . "/{$runId}-b.json",
+        $startFile = "{$directory}/{$runId}-start";
+        $readyFiles = [
+            "{$directory}/{$runId}-a-ready",
+            "{$directory}/{$runId}-b-ready",
         ];
+
+        $resultFiles = [
+            "{$directory}/{$runId}-a-result.json",
+            "{$directory}/{$runId}-b-result.json",
+        ];
+
+        $this->cleanupConcurrencyFiles([
+            $startFile,
+            ...$readyFiles,
+            ...$resultFiles,
+        ]);
 
         $children = [];
 
-        foreach ($resultFiles as $resultFile) {
+        foreach ($resultFiles as $index => $resultFile) {
             $pid = pcntl_fork();
 
             if ($pid === -1) {
@@ -152,31 +177,13 @@ class InventoryServiceTest extends TestCase
             }
 
             if ($pid === 0) {
-                $result = [
-                    'success' => false,
-                    'exception' => null,
-                ];
+                $readyFile = $readyFiles[$index];
 
-                try {
-                    $service = app(InventoryService::class);
-
-                    $service->decreaseStock(
-                        Product::query()->findOrFail($product->id),
-                        1,
-                    );
-
-                    $result['success'] = true;
-                } catch (\Throwable $exception) {
-                    $result['exception'] = [
-                        'class' => $exception::class,
-                        'message' => $exception->getMessage(),
-                    ];
-                }
-
-                file_put_contents(
+                $this->runConcurrentDecrease(
+                    $productId,
+                    $readyFile,
+                    $startFile,
                     $resultFile,
-                    json_encode($result, JSON_THROW_ON_ERROR),
-                    LOCK_EX,
                 );
 
                 exit(0);
@@ -185,12 +192,26 @@ class InventoryServiceTest extends TestCase
             $children[] = $pid;
         }
 
+        $this->waitForFiles($readyFiles);
+
+        /*
+         * Both processes have created their independent database
+         * connections and are ready to execute the mutation.
+         */
+        touch($startFile);
+
         foreach ($children as $pid) {
             pcntl_waitpid($pid, $status);
 
             $this->assertTrue(
                 pcntl_wifexited($status),
                 "Child process {$pid} did not exit normally."
+            );
+
+            $this->assertSame(
+                0,
+                pcntl_wexitstatus($status),
+                "Child process {$pid} exited with an error."
             );
         }
 
@@ -209,8 +230,6 @@ class InventoryServiceTest extends TestCase
                 512,
                 JSON_THROW_ON_ERROR,
             );
-
-            unlink($resultFile);
         }
 
         $successfulRequests = collect($results)
@@ -251,5 +270,93 @@ class InventoryServiceTest extends TestCase
             'Insufficient product stock.',
             $failedResult['exception']['message']
         );
+
+        $this->cleanupConcurrencyFiles([
+            $startFile,
+            ...$readyFiles,
+            ...$resultFiles,
+        ]);
+    }
+
+    private function runConcurrentDecrease(
+        int|string $productId,
+        string $readyFile,
+        string $startFile,
+        string $resultFile,
+    ): void {
+        /*
+         * Force a fresh database connection in the child process.
+         */
+        DB::purge();
+
+        $service = app(InventoryService::class);
+
+        touch($readyFile);
+
+        $this->waitForFile($startFile);
+
+        $result = [
+            'success' => false,
+            'exception' => null,
+        ];
+
+        try {
+            $product = Product::query()->findOrFail($productId);
+
+            $service->decreaseStock($product, 1);
+
+            $result['success'] = true;
+        } catch (\Throwable $exception) {
+            $result['exception'] = [
+                'class' => $exception::class,
+                'message' => $exception->getMessage(),
+            ];
+        }
+
+        file_put_contents(
+            $resultFile,
+            json_encode($result, JSON_THROW_ON_ERROR),
+            LOCK_EX,
+        );
+    }
+
+    private function waitForFiles(array $files, int $timeoutSeconds = 10): void
+    {
+        $deadline = microtime(true) + $timeoutSeconds;
+
+        foreach ($files as $file) {
+            while (! file_exists($file)) {
+                if (microtime(true) >= $deadline) {
+                    $this->fail(
+                        "Timed out waiting for concurrency file: {$file}"
+                    );
+                }
+
+                usleep(10_000);
+            }
+        }
+    }
+
+    private function waitForFile(string $file, int $timeoutSeconds = 10): void
+    {
+        $this->waitForFiles([$file], $timeoutSeconds);
+    }
+
+    private function cleanupConcurrencyFiles(array $files): void
+    {
+        foreach ($files as $file) {
+            if (file_exists($file)) {
+                unlink($file);
+            }
+        }
+    }
+
+    private function commitTestingTransaction(): void
+    {
+        $connection = DB::connection();
+
+        if ($connection->transactionLevel() > 0) {
+            $connection->commit();
+        }
     }
 }
