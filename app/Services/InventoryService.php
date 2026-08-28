@@ -36,13 +36,11 @@ class InventoryService
     {
         $this->validateQuantity($quantity);
 
-        DB::transaction(function () use ($product, $quantity) {
-            $lockedProduct = Product::query()
-                ->lockForUpdate()
-                ->findOrFail($product->getKey());
+        $lockedProduct = Product::query()
+            ->lockForUpdate()
+            ->findOrFail($product->getKey());
 
-            $lockedProduct->increment('stock', $quantity);
-        });
+        $lockedProduct->increment('stock', $quantity);
     }
 
     public function setStock(Product $product, int $stock): void
