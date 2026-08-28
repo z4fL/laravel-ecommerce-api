@@ -8,7 +8,9 @@ use App\Enum\OrderStatusTransition;
 use App\Enum\PaymentOutcome;
 use App\Enum\PaymentStatus;
 use App\Enum\PaymentStatusTransition;
+use App\Models\Order;
 use App\Models\Payment;
+use App\Services\InventoryService;
 use App\Services\Order\OrderStatusService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -18,6 +20,7 @@ class PaymentStatusService
 {
     public function __construct(
         private readonly OrderStatusService $orderStatusService,
+        private readonly InventoryService $inventoryService,
     ) {}
 
     public function update(PaymentEventResult $result): PaymentStatusTransition
@@ -44,10 +47,6 @@ class PaymentStatusService
 
             $this->persistEventData($payment, $result);
 
-            if ($transition === PaymentStatusTransition::IDEMPOTENT) {
-                return $transition;
-            }
-
             $previousStatus = $payment->status;
 
             $this->persistTransition($payment, $targetStatus);
@@ -63,7 +62,11 @@ class PaymentStatusService
             );
 
             if ($targetStatus === PaymentStatus::PAID) {
-                $this->updateOrderStatus($payment);
+                $orderTransition = $this->updateOrderStatus($payment);
+
+                if ($orderTransition === OrderStatusTransition::TRANSITIONED) {
+                    $this->reduceOrderStock($payment->order);
+                }
             }
 
             return $transition;
@@ -98,7 +101,7 @@ class PaymentStatusService
         $payment->save();
     }
 
-    private function updateOrderStatus(Payment $payment): void
+    private function updateOrderStatus(Payment $payment): OrderStatusTransition
     {
         $transition = $this->orderStatusService->update(
             $payment->order,
@@ -110,6 +113,8 @@ class PaymentStatusService
                 'order' => 'Order status cannot be updated to paid.',
             ]);
         }
+
+        return $transition;
     }
 
     private function determineTargetStatus(PaymentOutcome $outcome): PaymentStatus
@@ -169,5 +174,18 @@ class PaymentStatusService
         }
 
         $payment->save();
+    }
+
+    // Inventory Service
+    private function reduceOrderStock(Order $order): void
+    {
+        $order->loadMissing('orderItems.product');
+
+        foreach ($order->orderItems as $orderItem) {
+            $this->inventoryService->decreaseStock(
+                $orderItem->product,
+                $orderItem->quantity,
+            );
+        }
     }
 }

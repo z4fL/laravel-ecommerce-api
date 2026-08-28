@@ -19,19 +19,17 @@ class InventoryService
     {
         $this->validateQuantity($quantity);
 
-        DB::transaction(function () use ($product, $quantity) {
-            $lockedProduct = Product::query()
-                ->lockForUpdate()
-                ->findOrFail($product->getKey());
+        $lockedProduct = Product::query()
+            ->lockForUpdate()
+            ->findOrFail($product->getKey());
 
-            if ($lockedProduct->stock < $quantity) {
-                throw ValidationException::withMessages([
-                    'stock' => 'Insufficient product stock.',
-                ]);
-            }
+        if ($lockedProduct->stock < $quantity) {
+            throw ValidationException::withMessages([
+                'stock' => 'Insufficient product stock.',
+            ]);
+        }
 
-            $lockedProduct->decrement('stock', $quantity);
-        });
+        $lockedProduct->decrement('stock', $quantity);
     }
 
     public function increaseStock(Product $product, int $quantity): void

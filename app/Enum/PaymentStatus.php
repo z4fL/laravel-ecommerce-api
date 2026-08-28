@@ -25,7 +25,6 @@ enum PaymentStatus: string
         ],
         self::PAID->value => [
             self::REFUNDED,
-            self::FAILED,
         ],
         self::FAILED->value => [],
         self::EXPIRED->value => [],
