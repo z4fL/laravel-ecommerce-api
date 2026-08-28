@@ -8,6 +8,7 @@ use App\Models\Order;
 use App\Models\ShippingAddress;
 use App\Models\User;
 use App\Services\CartValidationService;
+use App\Services\InventoryService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -16,7 +17,8 @@ class OrderService
 {
     public function __construct(
         private readonly CartValidationService $cartValidationService,
-        private readonly OrderStatusService $orderStatusService
+        private readonly OrderStatusService $orderStatusService,
+        private readonly InventoryService $inventoryService,
     ) {}
 
     private function generateOrderNumber(): string
@@ -82,20 +84,36 @@ class OrderService
 
     public function cancel(Order $order): Order
     {
-        $transition = $this->orderStatusService->update(
-            $order,
-            OrderStatus::CANCELLED,
-        );
+        return DB::transaction(function () use ($order) {
+            $order = Order::query()
+                ->lockForUpdate()
+                ->findOrFail($order->getKey());
 
-        if ($transition === OrderStatusTransition::CONFLICT) {
-            throw ValidationException::withMessages([
-                'order' => 'This order can no longer be cancelled.',
-            ]);
-        }
+            $transition = $this->orderStatusService->update(
+                $order,
+                OrderStatus::CANCELLED,
+            );
 
+            if ($transition === OrderStatusTransition::CONFLICT) {
+                throw ValidationException::withMessages([
+                    'order' => 'This order can no longer be cancelled.',
+                ]);
+            }
 
-        $order->refresh();
+            if ($transition === OrderStatusTransition::TRANSITIONED) {
+                $order->load('orderItems.product');
 
-        return $order;
+                foreach ($order->orderItems as $orderItem) {
+                    $this->inventoryService->increaseStock(
+                        $orderItem->product,
+                        $orderItem->quantity,
+                    );
+                }
+            }
+
+            $order->refresh();
+
+            return $order;
+        });
     }
 }
