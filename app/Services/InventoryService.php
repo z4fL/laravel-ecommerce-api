@@ -2,9 +2,6 @@
 
 namespace App\Services;
 
-use App\Enum\InventoryHistoryType;
-use App\Models\InventoryHistory;
-use App\Models\Order;
 use App\Models\Product;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -18,28 +15,32 @@ class InventoryService
         return $product->stock >= $quantity;
     }
 
-    public function decreaseStock(Product $product, int $quantity, ?Order $order = null): void
+    public function decreaseStock(Product $product, int $quantity): void
     {
         $this->validateQuantity($quantity);
 
-        $this->mutateStock(
-            product: $product,
-            quantity: $quantity,
-            type: InventoryHistoryType::DECREASE,
-            order: $order,
-        );
+        $lockedProduct = Product::query()
+            ->lockForUpdate()
+            ->findOrFail($product->getKey());
+
+        if ($lockedProduct->stock < $quantity) {
+            throw ValidationException::withMessages([
+                'stock' => 'Insufficient product stock.',
+            ]);
+        }
+
+        $lockedProduct->decrement('stock', $quantity);
     }
 
-    public function increaseStock(Product $product, int $quantity, ?Order $order = null): void
+    public function increaseStock(Product $product, int $quantity): void
     {
         $this->validateQuantity($quantity);
 
-        $this->mutateStock(
-            product: $product,
-            quantity: $quantity,
-            type: InventoryHistoryType::INCREASE,
-            order: $order,
-        );
+        $lockedProduct = Product::query()
+            ->lockForUpdate()
+            ->findOrFail($product->getKey());
+
+        $lockedProduct->increment('stock', $quantity);
     }
 
     public function setStock(Product $product, int $stock): void
@@ -64,46 +65,6 @@ class InventoryService
                 'quantity' => 'Quantity must be greater than zero.',
             ]);
         }
-    }
-
-    private function mutateStock(
-        Product $product,
-        int $quantity,
-        InventoryHistoryType $type,
-        ?Order $order = null,
-    ): void {
-        $lockedProduct = Product::query()
-            ->lockForUpdate()
-            ->findOrFail($product->getKey());
-
-        $stockBefore = $lockedProduct->stock;
-
-        if (
-            $type === InventoryHistoryType::DECREASE
-            && $stockBefore < $quantity
-        ) {
-            throw ValidationException::withMessages([
-                'stock' => 'Insufficient product stock.',
-            ]);
-        }
-
-        $stockAfter = match ($type) {
-            InventoryHistoryType::DECREASE => $stockBefore - $quantity,
-            InventoryHistoryType::INCREASE => $stockBefore + $quantity,
-        };
-
-        $lockedProduct->update([
-            'stock' => $stockAfter,
-        ]);
-
-        InventoryHistory::create([
-            'product_id' => $lockedProduct->getKey(),
-            'order_id' => $order?->getKey(),
-            'type' => $type,
-            'quantity' => $quantity,
-            'stock_before' => $stockBefore,
-            'stock_after' => $stockAfter,
-        ]);
     }
 
     private function validateStock(int $stock): void

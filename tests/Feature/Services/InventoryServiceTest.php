@@ -2,14 +2,11 @@
 
 namespace Tests\Feature\Services;
 
-use App\Enum\InventoryHistoryType;
-use App\Models\Order;
 use App\Models\Product;
 use App\Services\InventoryService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
-use RuntimeException;
 use Tests\TestCase;
 
 class InventoryServiceTest extends TestCase
@@ -55,61 +52,17 @@ class InventoryServiceTest extends TestCase
         $this->inventoryService->checkAvailability($product, 0);
     }
 
-    public function test_it_decreases_stock_and_creates_inventory_history(): void
+    public function test_it_decreases_stock(): void
     {
         $product = Product::factory()->create([
             'stock' => 10,
         ]);
 
-        $order = Order::factory()->create();
-
-        $this->inventoryService->decreaseStock(
-            $product,
-            3,
-            $order,
-        );
+        $this->inventoryService->decreaseStock($product, 3);
 
         $this->assertDatabaseHas('products', [
             'id' => $product->id,
             'stock' => 7,
-        ]);
-
-        $this->assertDatabaseHas('inventory_histories', [
-            'product_id' => $product->id,
-            'order_id' => $order->id,
-            'type' => InventoryHistoryType::DECREASE->value,
-            'quantity' => 3,
-            'stock_before' => 10,
-            'stock_after' => 7,
-        ]);
-    }
-
-    public function test_it_increases_stock_and_creates_inventory_history(): void
-    {
-        $product = Product::factory()->create([
-            'stock' => 10,
-        ]);
-
-        $order = Order::factory()->create();
-
-        $this->inventoryService->increaseStock(
-            $product,
-            3,
-            $order,
-        );
-
-        $this->assertDatabaseHas('products', [
-            'id' => $product->id,
-            'stock' => 13,
-        ]);
-
-        $this->assertDatabaseHas('inventory_histories', [
-            'product_id' => $product->id,
-            'order_id' => $order->id,
-            'type' => InventoryHistoryType::INCREASE->value,
-            'quantity' => 3,
-            'stock_before' => 10,
-            'stock_after' => 13,
         ]);
     }
 
@@ -134,8 +87,6 @@ class InventoryServiceTest extends TestCase
             'id' => $product->id,
             'stock' => 2,
         ]);
-
-        $this->assertDatabaseCount('inventory_histories', 0);
     }
 
     public function test_it_rejects_invalid_decrease_quantity(): void
@@ -147,8 +98,6 @@ class InventoryServiceTest extends TestCase
         $this->expectException(ValidationException::class);
 
         $this->inventoryService->decreaseStock($product, 0);
-
-        $this->assertDatabaseCount('inventory_histories', 0);
     }
 
     public function test_it_does_not_allow_stock_to_become_negative(): void
@@ -167,41 +116,6 @@ class InventoryServiceTest extends TestCase
 
         $this->assertGreaterThanOrEqual(0, $product->stock);
         $this->assertSame(1, $product->stock);
-
-        $this->assertDatabaseCount('inventory_histories', 0);
-    }
-
-    public function test_it_rolls_back_stock_and_inventory_history_when_transaction_fails(): void
-    {
-        $product = Product::factory()->create([
-            'stock' => 10,
-        ]);
-
-        $order = Order::factory()->create();
-
-        try {
-            DB::transaction(function () use ($product, $order) {
-                $this->inventoryService->decreaseStock(
-                    $product,
-                    3,
-                    $order,
-                );
-
-                throw new RuntimeException('Force transaction rollback.');
-            });
-        } catch (RuntimeException $exception) {
-            $this->assertSame(
-                'Force transaction rollback.',
-                $exception->getMessage()
-            );
-        }
-
-        $this->assertDatabaseHas('products', [
-            'id' => $product->id,
-            'stock' => 10,
-        ]);
-
-        $this->assertDatabaseCount('inventory_histories', 0);
     }
 
     public function test_concurrent_decrease_cannot_oversell_stock(): void
@@ -356,17 +270,6 @@ class InventoryServiceTest extends TestCase
             'Insufficient product stock.',
             $failedResult['exception']['message']
         );
-
-        $this->assertDatabaseCount('inventory_histories', 1);
-
-        $this->assertDatabaseHas('inventory_histories', [
-            'product_id' => $productId,
-            'order_id' => null,
-            'type' => InventoryHistoryType::DECREASE->value,
-            'quantity' => 1,
-            'stock_before' => 1,
-            'stock_after' => 0,
-        ]);
 
         $this->cleanupConcurrencyFiles([
             $startFile,
