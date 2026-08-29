@@ -183,8 +183,9 @@ class PaymentStatusService
 
         foreach ($order->orderItems as $orderItem) {
             $this->inventoryService->decreaseStock(
-                $orderItem->product,
-                $orderItem->quantity,
+                product: $orderItem->product,
+                quantity: $orderItem->quantity,
+                order: $order
             );
         }
     }

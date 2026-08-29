@@ -105,8 +105,9 @@ class OrderService
 
                 foreach ($order->orderItems as $orderItem) {
                     $this->inventoryService->increaseStock(
-                        $orderItem->product,
-                        $orderItem->quantity,
+                        product: $orderItem->product,
+                        quantity: $orderItem->quantity,
+                        order: $order
                     );
                 }
             }
