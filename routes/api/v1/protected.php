@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\ShippingAddressController;
 use App\Http\Controllers\Api\StoreController;
 use App\Http\Controllers\Api\TagController;
 use App\Http\Controllers\Api\CheckoutController;
+use App\Http\Controllers\Api\EmailVerificationController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\PaymentController;
 use Illuminate\Support\Facades\Route;
@@ -19,20 +20,30 @@ Route::middleware('auth:api')->group(function () {
 
     Route::post('/auth/logout', [AuthController::class, 'logout']);
 
-    Route::post('/store', [StoreController::class, 'store']);
+    Route::post(
+        '/auth/email/verification-notification',
+        [EmailVerificationController::class, 'send']
+    );
 
-    Route::apiResource('/shipping-addresses', ShippingAddressController::class);
+    Route::middleware('verified')->group(function () {
+        Route::post('/store', [StoreController::class, 'store']); // create store for user
 
-    Route::patch('/shipping-addresses/{shipping_address}/default', [ShippingAddressController::class, 'makeDefault']);
+        Route::apiResource('/shipping-addresses', ShippingAddressController::class);
 
-    Route::post('/checkout', [CheckoutController::class, 'preview']);
+        Route::patch(
+            '/shipping-addresses/{shipping_address}/default',
+            [ShippingAddressController::class, 'makeDefault']
+        );
 
-    Route::get('/orders', [OrderController::class, 'index']);
-    Route::post('/orders', [OrderController::class, 'store']);
-    Route::get('/orders/{order}', [OrderController::class, 'show']);
-    Route::post('/orders/{order}/cancel', [OrderController::class, 'cancel']);
+        Route::post('/checkout', [CheckoutController::class, 'preview']);
 
-    Route::post('/orders/{order}/payment', [PaymentController::class, 'store']);
+        Route::get('/orders', [OrderController::class, 'index']);
+        Route::post('/orders', [OrderController::class, 'store']);
+        Route::get('/orders/{order}', [OrderController::class, 'show']);
+        Route::post('/orders/{order}/cancel', [OrderController::class, 'cancel']);
+
+        Route::post('/orders/{order}/payment', [PaymentController::class, 'store']);
+    });
 });
 
 Route::middleware(['auth:api', 'role:admin'])->group(function () {
@@ -44,7 +55,7 @@ Route::middleware(['auth:api', 'role:admin'])->group(function () {
 });
 
 // Cart
-Route::middleware(['auth:api'])
+Route::middleware(['auth:api', 'verified'])
     ->prefix('cart')
     ->group(function () {
         Route::get('/', [CartController::class, 'show']);
