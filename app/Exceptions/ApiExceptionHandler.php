@@ -3,6 +3,7 @@
 namespace App\Exceptions;
 
 use App\Traits\ApiResponse;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
 use PHPOpenSourceSaver\JWTAuth\Exceptions\JWTException;
@@ -26,9 +27,13 @@ class ApiExceptionHandler
             $exception instanceof ValidationException
             => $this->validation($exception),
 
+            // Validation
+            $exception instanceof AuthenticationException
+            => $this->unauthenticated(),
+
             // Unsupported gateway
             $exception instanceof UnsupportedPaymentGatewayException
-            => $this->paymentGateway($exception),
+            => $this->paymentGateway(),
 
             $exception instanceof TokenExpiredException
             => $this->jwt('Token expired.'),
@@ -52,6 +57,14 @@ class ApiExceptionHandler
             message: 'Validation failed.',
             status: 422,
             errors: $exception->errors(),
+        );
+    }
+
+    private function unauthenticated(): JsonResponse
+    {
+        return $this->error(
+            message: 'Unauthenticated.',
+            status: 401,
         );
     }
 
