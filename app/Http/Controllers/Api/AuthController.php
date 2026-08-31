@@ -8,6 +8,7 @@ use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use OpenApi\Attributes as OA;
 
@@ -156,7 +157,7 @@ class AuthController extends Controller
             'role' => UserRole::CUSTOMER
         ]);
 
-        $token = auth('api')->login($user);
+        $token = $user->createToken('api-token')->plainTextToken;
 
         return $this->created('User', [
             'user' => [
@@ -168,23 +169,23 @@ class AuthController extends Controller
             ],
             'access_token' => $token,
             'token_type' => 'Bearer',
-            'expires_in' => auth('api')->factory()->getTTL() * 60,
         ]);
     }
 
     public function login(LoginRequest $request): JsonResponse
     {
         $credentials = $request->validated();
-        $token = auth('api')->attempt($credentials);
 
-        if (!$token) {
+        $user = User::where('email', $credentials['email'])->first();
+
+        if (!$user || !Hash::check($credentials['password'], $user->password)) {
             return $this->error(
                 'Invalid email or password.',
                 401
             );
         }
 
-        $user = auth('api')->user();
+        $token = $user->createToken('api-token')->plainTextToken;
 
         return $this->success(
             [
@@ -197,30 +198,14 @@ class AuthController extends Controller
                 ],
                 'access_token' => $token,
                 'token_type' => 'Bearer',
-                'expires_in' => auth('api')->factory()->getTTL() * 60,
             ],
             'Login successful.'
         );
     }
 
-    public function refresh(): JsonResponse
-    {
-
-        $token = auth('api')->refresh();
-
-        return $this->success(
-            [
-                'access_token' => $token,
-                'token_type' => 'Bearer',
-                'expires_in' => auth('api')->factory()->getTTL() * 60,
-            ],
-            'Token refreshed successfully.'
-        );
-    }
-
     public function logout(): JsonResponse
     {
-        auth('api')->logout();
+        request()->user()->currentAccessToken()->delete();
 
         return $this->success(message: 'Logout successful.');
     }

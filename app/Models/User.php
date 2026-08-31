@@ -2,12 +2,8 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
-
 use App\Enum\UserRole;
 use App\Notifications\VerifyEmail;
-use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
-use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -16,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 
 #[Fillable([
     'name',
@@ -26,10 +23,10 @@ use Illuminate\Notifications\Notifiable;
     'role'
 ])]
 #[Hidden(['password', 'remember_token'])]
-class User extends Authenticatable implements JWTSubject, MustVerifyEmail
+class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable;
 
     /**
      * Get the attributes that should be cast.
@@ -63,22 +60,6 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
     public function orders(): HasMany
     {
         return $this->hasMany(Order::class);
-    }
-
-    /**
-     * Get the identifier that will be stored in the JWT token.
-     */
-    public function getJWTIdentifier()
-    {
-        return $this->getKey();
-    }
-
-    /**
-     * Return an array with custom claims to be added to the JWT token.
-     */
-    public function getJWTCustomClaims()
-    {
-        return [];
     }
 
     public function sendEmailVerificationNotification()
