@@ -15,6 +15,9 @@ Route::prefix('auth')->group(function () {
     Route::post('/login', [AuthController::class, 'login']);
 
     Route::post('/refresh', [AuthController::class, 'refresh']);
+
+    Route::post('/forgot-password', [AuthController::class, 'forgotPassword'])->middleware('guest');
+    Route::post('/reset-password', [AuthController::class, 'resetPassword'])->middleware('guest');
 });
 
 Route::get(
