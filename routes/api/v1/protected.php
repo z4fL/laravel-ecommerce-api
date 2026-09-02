@@ -49,9 +49,11 @@ Route::middleware('auth:api')->group(function () {
 Route::middleware(['auth:api', 'role:admin'])->group(function () {
     Route::apiResource('categories', CategoryController::class)
         ->except(['index', 'show']);
+    Route::post('/categories/{category}/restore', [CategoryController::class, 'restore'])->withTrashed();
 
     Route::apiResource('tags', TagController::class)
         ->except(['index', 'show']);
+    Route::post('/tags/{tag}/restore', [TagController::class, 'restore'])->withTrashed();
 });
 
 // Cart

@@ -11,6 +11,7 @@ trait ApiResponse
     private const CREATED_MESSAGE = '%s created successfully.';
     private const UPDATED_MESSAGE = '%s updated successfully.';
     private const DELETED_MESSAGE = '%s deleted successfully.';
+    private const RESTORED_MESSAGE = '%s restored successfully.';
 
     private function respond(
         bool $success,
@@ -73,6 +74,18 @@ trait ApiResponse
         ?string $message = null
     ): JsonResponse {
         $message ??= sprintf(self::DELETED_MESSAGE, $resource);
+
+        return $this->respond(
+            success: true,
+            message: $message,
+        );
+    }
+
+    protected function restored(
+        string $resource,
+        ?string $message = null
+    ): JsonResponse {
+        $message ??= sprintf(self::RESTORED_MESSAGE, $resource);
 
         return $this->respond(
             success: true,

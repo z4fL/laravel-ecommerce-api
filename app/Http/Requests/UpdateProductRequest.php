@@ -28,7 +28,7 @@ class UpdateProductRequest extends FormRequest
             'category_id' => [
                 'sometimes',
                 'integer',
-                Rule::exists('categories', 'id'),
+                Rule::exists('categories', 'id')->withoutTrashed(),
             ],
             'sku' => [
                 'sometimes',
@@ -63,7 +63,7 @@ class UpdateProductRequest extends FormRequest
             ],
             'tag_ids.*' => [
                 'integer',
-                Rule::exists('tags', 'id'),
+                Rule::exists('tags', 'id')->withoutTrashed(),
             ],
         ];
     }

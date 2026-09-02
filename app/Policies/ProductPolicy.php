@@ -82,9 +82,9 @@ class ProductPolicy
     /**
      * Determine whether the user can restore the model.
      */
-    public function restore(User $user, Product $product): bool
+    public function restore(User $user, Product $product): Response
     {
-        return false;
+        return $this->update($user, $product);
     }
 
     /**

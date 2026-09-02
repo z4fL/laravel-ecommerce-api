@@ -17,6 +17,7 @@ Route::middleware(['auth:api', 'role:seller,admin', 'verified'])
             ->parameters([
                 'products' => 'store_product',
             ]);
+        Route::post('/products/{restore_product}/restore', [StoreProductController::class, 'restore']);
 
         Route::post('/products/{store_product}/images', [ProductImageController::class, 'store']);
         Route::patch('/products/{store_product}/images/reorder', [ProductImageController::class, 'reorder']);

@@ -22,6 +22,7 @@ return new class extends Migration
             $table->unsignedBigInteger('price');
             $table->string('status');
             $table->unsignedInteger('stock')->default(0);
+            $table->softDeletes();
             $table->timestamps();
         });
     }
