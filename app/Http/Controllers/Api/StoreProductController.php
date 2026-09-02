@@ -11,6 +11,7 @@ use App\Http\Resources\ProductResource;
 use App\Models\Product;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\ValidationException;
 
 class StoreProductController extends Controller
 {
@@ -29,8 +30,12 @@ class StoreProductController extends Controller
         $products = $this->currentStoreProducts()
             ->with([
                 'store',
-                'category:id,name,slug',
-                'tags',
+                'category' => fn($q) => $q
+                    ->withTrashed()
+                    ->select('id', 'name', 'slug'),
+                'tags' => fn($q) => $q
+                    ->withTrashed()
+                    ->select('tags.id', 'tags.name', 'tags.slug'),
             ])
             ->search($search ?? null)
             ->filter($filters)
@@ -66,8 +71,12 @@ class StoreProductController extends Controller
             new ProductResource(
                 $product->load([
                     'store',
-                    'category:id,name,slug',
-                    'tags',
+                    'category' => fn($q) => $q
+                        ->withTrashed()
+                        ->select('id', 'name', 'slug'),
+                    'tags' => fn($q) => $q
+                        ->withTrashed()
+                        ->select('tags.id', 'tags.name', 'tags.slug'),
                 ])
             )
         );
@@ -80,11 +89,17 @@ class StoreProductController extends Controller
     {
         Gate::authorize('view', $store_product);
 
-        return $this->success(new ProductResource($store_product->load([
-            'store',
-            'category:id,name,slug',
-            'tags',
-        ])));
+        return $this->success(new ProductResource(
+            $store_product->load([
+                'store',
+                'category' => fn($q) => $q
+                    ->withTrashed()
+                    ->select('id', 'name', 'slug'),
+                'tags' => fn($q) => $q
+                    ->withTrashed()
+                    ->select('tags.id', 'tags.name', 'tags.slug'),
+            ])
+        ));
     }
 
     /**
@@ -114,8 +129,12 @@ class StoreProductController extends Controller
             new ProductResource(
                 $product->load([
                     'store',
-                    'category:id,name,slug',
-                    'tags',
+                    'category' => fn($q) => $q
+                        ->withTrashed()
+                        ->select('id', 'name', 'slug'),
+                    'tags' => fn($q) => $q
+                        ->withTrashed()
+                        ->select('tags.id', 'tags.name', 'tags.slug'),
                 ])
             )
         );
@@ -132,5 +151,24 @@ class StoreProductController extends Controller
         $store_product->delete();
 
         return $this->deleted('Product', sprintf("Product with SKU: %s deleted successfully.", $sku));
+    }
+
+    /**
+     * Restore the specified resource from storage.
+     */
+    public function restore(Product $store_product)
+    {
+        Gate::authorize('restore', $store_product);
+
+        if (! $store_product->trashed()) {
+            throw ValidationException::withMessages([
+                'product' => ['Product is already active and cannot be restored.'],
+            ]);
+        }
+
+        $sku = $store_product->sku;
+        $store_product->restore();
+
+        return $this->restored('Product', sprintf("Product with SKU: %s restored successfully.", $sku));
     }
 }

@@ -7,6 +7,7 @@ use App\Models\Category;
 use App\Http\Requests\StoreCategoryRequest;
 use App\Http\Requests\UpdateCategoryRequest;
 use App\Http\Resources\CategoryResource;
+use Illuminate\Validation\ValidationException;
 
 class CategoryController extends Controller
 {
@@ -62,5 +63,21 @@ class CategoryController extends Controller
         $category->delete();
 
         return $this->deleted('Category');
+    }
+
+    /**
+     * Restore the specified resource from storage.
+     */
+    public function restore(Category $category)
+    {
+        if (! $category->trashed()) {
+            throw ValidationException::withMessages([
+                'category' => ['Category is already active and cannot be restored.'],
+            ]);
+        }
+
+        $category->restore();
+
+        return $this->restored('Category');
     }
 }

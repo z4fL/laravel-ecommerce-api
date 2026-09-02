@@ -24,8 +24,8 @@ class ProductController extends Controller
             ->published()
             ->with([
                 'store',
-                'category:id,name,slug',
-                'tags',
+                'category' => fn($q) => $q->withTrashed()->select('id', 'name', 'slug'),
+                'tags' => fn($q) => $q->withTrashed(),
             ])
             ->search($search ?? null)
             ->filter($filters)
@@ -45,8 +45,8 @@ class ProductController extends Controller
     {
         $product = $public_product->load([
             'store',
-            'category:id,name,slug',
-            'tags',
+            'category' => fn($q) => $q->withTrashed()->select('id', 'name', 'slug'),
+            'tags' => fn($q) => $q->withTrashed(),
         ]);
 
         return $this->success(new ProductResource($product));

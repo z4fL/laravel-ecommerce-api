@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -15,14 +16,22 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('username')->unique();
-            $table->string('email')->unique();
+            $table->string('email');
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->string('phone', 20);
             $table->string('role')->default('customer');
             $table->rememberToken();
+            $table->softDeletes();
             $table->timestamps();
         });
+
+        // Postgre specific
+        DB::statement('
+            CREATE UNIQUE INDEX users_email_unique
+            ON users (email)
+            WHERE deleted_at IS NULL
+        ');
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {
             $table->string('email')->primary();
@@ -46,6 +55,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('users');
+        DB::statement('DROP INDEX IF EXISTS users_email_unique');
         Schema::dropIfExists('password_reset_tokens');
         Schema::dropIfExists('sessions');
     }

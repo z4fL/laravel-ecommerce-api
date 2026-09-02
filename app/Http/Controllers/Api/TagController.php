@@ -7,6 +7,7 @@ use App\Models\Tag;
 use App\Http\Requests\StoreTagRequest;
 use App\Http\Requests\UpdateTagRequest;
 use App\Http\Resources\TagResource;
+use Illuminate\Validation\ValidationException;
 
 class TagController extends Controller
 {
@@ -60,5 +61,21 @@ class TagController extends Controller
         $tag->delete();
 
         return $this->deleted('Tag');
+    }
+
+    /**
+     * Restore the specified resource from storage.
+     */
+    public function restore(Tag $tag)
+    {
+        if (! $tag->trashed()) {
+            throw ValidationException::withMessages([
+                'tag' => ['Tag is already active and cannot be restored.'],
+            ]);
+        }
+
+        $tag->restore();
+
+        return $this->restored('Tag');
     }
 }

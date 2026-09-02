@@ -392,7 +392,7 @@ describe("DELETE /store/products/{store_product}", function () {
                 'success' => true,
             ]);
 
-        $this->assertDatabaseMissing('products', [
+        $this->assertSoftDeleted('products', [
             'id' => $product->id,
         ]);
     });

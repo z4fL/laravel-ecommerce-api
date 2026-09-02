@@ -35,5 +35,15 @@ class RouteServiceProvider extends ServiceProvider
                 ->whereSlug($slug)
                 ->firstOrFail();
         });
+
+        Route::bind('restore_product', function ($slug) {
+            return request()->user()
+                ->store
+                ->products()
+                ->withTrashed()
+                ->whereSlug($slug)
+                ->whereNotNull('deleted_at')
+                ->firstOrFail();
+        });
     }
 }

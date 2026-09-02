@@ -28,7 +28,7 @@ class StoreProductRequest extends FormRequest
             'category_id' => [
                 'required',
                 'integer',
-                Rule::exists('categories', 'id')
+                Rule::exists('categories', 'id')->withoutTrashed(),
             ],
             'sku' => [
                 'required',
@@ -68,7 +68,7 @@ class StoreProductRequest extends FormRequest
             ],
             'tag_ids.*' => [
                 'integer',
-                Rule::exists('tags', 'id')
+                Rule::exists('tags', 'id')->withoutTrashed(),
             ]
         ];
     }
