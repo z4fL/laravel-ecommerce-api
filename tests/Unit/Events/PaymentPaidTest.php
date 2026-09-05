@@ -3,12 +3,15 @@
 namespace Tests\Unit\Events;
 
 use App\Events\PaymentPaid;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
 use Tests\TestCase;
 
 class PaymentPaidTest extends TestCase
 {
+    use RefreshDatabase;
+
     public function test_payment_paid_listener_handles_event(): void
     {
         Log::spy();
