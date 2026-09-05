@@ -6,6 +6,7 @@ use App\Enum\OrderStatus;
 use App\Enum\PaymentOutcome;
 use App\Enum\PaymentStatus;
 use App\Enum\PaymentStatusTransition;
+use App\Events\PaymentPaid;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Services\Payment\PaymentStatusService;
@@ -13,6 +14,7 @@ use App\DataTransferObjects\PaymentEventResult;
 use App\Models\OrderItem;
 use App\Models\Product;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
@@ -31,6 +33,8 @@ class PaymentStatusServiceTest extends TestCase
 
     public function test_pending_payment_can_transition_to_paid(): void
     {
+        Event::fake([PaymentPaid::class]);
+
         $order = Order::factory()
             ->create([
                 'status' => OrderStatus::PENDING_PAYMENT,
@@ -65,6 +69,10 @@ class PaymentStatusServiceTest extends TestCase
             'id' => $order->id,
             'status' => OrderStatus::PAID->value,
         ]);
+
+        Event::assertDispatched(PaymentPaid::class, function (PaymentPaid $event) use ($payment): bool {
+            return $event->paymentId === $payment->id;
+        });
     }
 
     public function test_pending_payment_can_transition_to_failed(): void
@@ -144,6 +152,8 @@ class PaymentStatusServiceTest extends TestCase
 
     public function test_same_payment_status_is_idempotent(): void
     {
+        Event::fake([PaymentPaid::class]);
+
         $payment = $this->createPayment(
             status: PaymentStatus::PAID,
         );
@@ -165,6 +175,8 @@ class PaymentStatusServiceTest extends TestCase
             'id' => $payment->id,
             'status' => PaymentStatus::PAID->value,
         ]);
+
+        Event::assertNotDispatched(PaymentPaid::class);
     }
 
     public function test_paid_payment_cannot_transition_to_failed(): void

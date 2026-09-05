@@ -8,6 +8,7 @@ use App\Enum\OrderStatusTransition;
 use App\Enum\PaymentOutcome;
 use App\Enum\PaymentStatus;
 use App\Enum\PaymentStatusTransition;
+use App\Events\PaymentPaid;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Services\InventoryService;
@@ -67,6 +68,8 @@ class PaymentStatusService
                 if ($orderTransition === OrderStatusTransition::TRANSITIONED) {
                     $this->reduceOrderStock($payment->order);
                 }
+
+                PaymentPaid::dispatch($payment->id);
             }
 
             return $transition;
