@@ -3,14 +3,16 @@
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Store;
-use App\Models\Tag;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
     $this->endpoint = '/api/v1/products';
+    Cache::flush();
 
     // $this->store = Store::factory()->create();
     // $this->categories = Category::factory()->count(2)->create();
@@ -31,7 +33,7 @@ describe('GET /products', function () {
         $this->getJson($this->endpoint)
             ->assertOk()
             ->assertJson([
-                'success' => true
+                'success' => true,
             ])
             ->assertJsonCount($products->count(), 'data')
             ->assertJsonStructure([
@@ -74,7 +76,7 @@ describe('GET /products', function () {
     });
 
     it('draft products are not included in catalog', function () {
-        $publishedProduct =  Product::factory()->count(2)->published()->create();
+        $publishedProduct = Product::factory()->count(2)->published()->create();
         Product::factory()->count(1)->draft()->create();
 
         $response = $this->getJson($this->endpoint);
@@ -84,7 +86,7 @@ describe('GET /products', function () {
             ->assertJsonCount($publishedProduct->count(), 'data');
 
         collect($response->json('data'))
-            ->each(fn($product) => expect($product['status'])->not->toBe('draft'));
+            ->each(fn ($product) => expect($product['status'])->not->toBe('draft'));
     });
 
     it('search only returns published products', function () {
@@ -125,7 +127,7 @@ describe('GET /products', function () {
             ->assertJsonCount(1, 'data');
     });
 
-    it('sorting still works',  function () {
+    it('sorting still works', function () {
         Product::factory()->published()->create([
             'name' => 'Zebra',
         ]);
@@ -165,6 +167,75 @@ describe('GET /products', function () {
                     'path',
                 ],
             ]);
+    });
+
+    it('uses the cached result for the same listing query', function () {
+        Product::factory()->published()->create();
+        $productQueries = 0;
+
+        DB::listen(function ($query) use (&$productQueries) {
+            if (str_contains(strtolower($query->sql), 'from "products"')) {
+                $productQueries++;
+            }
+        });
+
+        $this->getJson($this->endpoint)->assertOk();
+        $queriesAfterFirstRequest = $productQueries;
+
+        $this->getJson($this->endpoint)->assertOk();
+
+        expect($queriesAfterFirstRequest)->toBeGreaterThan(0)
+            ->and($productQueries)->toBe($queriesAfterFirstRequest);
+    });
+
+    it('uses a different cache entry for different listing parameters', function () {
+        Product::factory()->published()->create();
+        $productQueries = 0;
+
+        DB::listen(function ($query) use (&$productQueries) {
+            if (str_contains(strtolower($query->sql), 'from "products"')) {
+                $productQueries++;
+            }
+        });
+
+        $this->getJson($this->endpoint)->assertOk();
+        $queriesAfterFirstRequest = $productQueries;
+
+        $this->getJson("{$this->endpoint}?sort=name")->assertOk();
+
+        expect($productQueries)->toBeGreaterThan($queriesAfterFirstRequest);
+    });
+
+    it('invalidates the listing cache when a product changes', function () {
+        $this->getJson($this->endpoint)
+            ->assertOk()
+            ->assertJsonCount(0, 'data');
+
+        $product = Product::factory()->published()->create([
+            'name' => 'Original name',
+        ]);
+
+        $this->getJson($this->endpoint)
+            ->assertOk()
+            ->assertJsonPath('data.0.name', 'Original name');
+
+        $product->update(['name' => 'Updated name']);
+
+        $this->getJson($this->endpoint)
+            ->assertOk()
+            ->assertJsonPath('data.0.name', 'Updated name');
+
+        $product->delete();
+
+        $this->getJson($this->endpoint)
+            ->assertOk()
+            ->assertJsonCount(0, 'data');
+
+        $product->restore();
+
+        $this->getJson($this->endpoint)
+            ->assertOk()
+            ->assertJsonPath('data.0.name', 'Updated name');
     });
 });
 
