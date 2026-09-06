@@ -8,6 +8,7 @@ use App\Enum\OrderStatusTransition;
 use App\Enum\PaymentOutcome;
 use App\Enum\PaymentStatus;
 use App\Enum\PaymentStatusTransition;
+use App\Events\OrderPaid;
 use App\Events\PaymentPaid;
 use App\Models\Order;
 use App\Models\Payment;
@@ -70,6 +71,7 @@ class PaymentStatusService
                 }
 
                 PaymentPaid::dispatch($payment->id);
+                OrderPaid::dispatch($payment->order_id);
             }
 
             return $transition;
