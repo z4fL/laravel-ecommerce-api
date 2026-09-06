@@ -14,7 +14,7 @@ use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\PaymentController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware('auth:api')->group(function () {
+Route::middleware(['auth:api', 'throttle:api'])->group(function () {
     Route::get('/me', [ProfileController::class, 'show']);
     Route::patch('/me', [ProfileController::class, 'update']);
 
@@ -23,7 +23,7 @@ Route::middleware('auth:api')->group(function () {
     Route::post(
         '/auth/email/verification-notification',
         [EmailVerificationController::class, 'send']
-    );
+    )->middleware('throttle:email-verification');
 
     Route::middleware('verified')->group(function () {
         Route::post('/store', [StoreController::class, 'store']); // create store for user
@@ -46,7 +46,7 @@ Route::middleware('auth:api')->group(function () {
     });
 });
 
-Route::middleware(['auth:api', 'role:admin'])->group(function () {
+Route::middleware(['auth:api', 'throttle:api', 'role:admin'])->group(function () {
     Route::apiResource('categories', CategoryController::class)
         ->except(['index', 'show']);
     Route::post('/categories/{category}/restore', [CategoryController::class, 'restore'])->withTrashed();
@@ -57,7 +57,7 @@ Route::middleware(['auth:api', 'role:admin'])->group(function () {
 });
 
 // Cart
-Route::middleware(['auth:api', 'verified'])
+Route::middleware(['auth:api', 'throttle:api', 'verified'])
     ->prefix('cart')
     ->group(function () {
         Route::get('/', [CartController::class, 'show']);
