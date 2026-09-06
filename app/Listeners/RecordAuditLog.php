@@ -5,8 +5,9 @@ namespace App\Listeners;
 use App\Events\PaymentPaid;
 use App\Models\AuditLog;
 use App\Models\Payment;
+use Illuminate\Contracts\Queue\ShouldQueue;
 
-final class RecordAuditLog
+final class RecordAuditLog implements ShouldQueue
 {
     public function handle(PaymentPaid $event): void
     {
