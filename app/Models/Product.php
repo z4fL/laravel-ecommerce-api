@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
 #[Fillable([
@@ -24,11 +25,31 @@ use Illuminate\Support\Str;
     'description',
     'price',
     'status',
-    'stock'
+    'stock',
 ])]
 class Product extends Model
 {
-    use SoftDeletes, HasUniqueSlug, HasFactory;
+    private const LISTING_CACHE_VERSION_KEY = 'products:listing:version';
+
+    use HasFactory, HasUniqueSlug, SoftDeletes;
+
+    protected static function booted(): void
+    {
+        static::created(fn () => static::invalidateListingCache());
+        static::updated(fn () => static::invalidateListingCache());
+        static::deleted(fn () => static::invalidateListingCache());
+        static::restored(fn () => static::invalidateListingCache());
+    }
+
+    public static function listingCacheVersion(): int
+    {
+        return (int) Cache::get(self::LISTING_CACHE_VERSION_KEY, 0);
+    }
+
+    public static function invalidateListingCache(): void
+    {
+        Cache::increment(self::LISTING_CACHE_VERSION_KEY);
+    }
 
     public function getRouteKeyName(): string
     {
@@ -38,7 +59,7 @@ class Product extends Model
     protected function casts(): array
     {
         return [
-            'status' => ProductStatus::class
+            'status' => ProductStatus::class,
         ];
     }
 
@@ -153,6 +174,7 @@ class Product extends Model
     {
         if ($sort === null) {
             $query->latest();
+
             return;
         }
 

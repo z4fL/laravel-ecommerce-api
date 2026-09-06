@@ -30,10 +30,10 @@ class StoreProductController extends Controller
         $products = $this->currentStoreProducts()
             ->with([
                 'store',
-                'category' => fn($q) => $q
+                'category' => fn ($q) => $q
                     ->withTrashed()
                     ->select('id', 'name', 'slug'),
-                'tags' => fn($q) => $q
+                'tags' => fn ($q) => $q
                     ->withTrashed()
                     ->select('tags.id', 'tags.name', 'tags.slug'),
             ])
@@ -58,7 +58,7 @@ class StoreProductController extends Controller
         $product = DB::transaction(function () use ($request) {
 
             $product = $this->currentStoreProducts()->create([
-                ...$request->safe()->except('tag_ids')
+                ...$request->safe()->except('tag_ids'),
             ]);
 
             $product->tags()->sync($request->validated('tag_ids', []));
@@ -66,15 +66,17 @@ class StoreProductController extends Controller
             return $product;
         });
 
+        Product::invalidateListingCache();
+
         return $this->created(
             'Product',
             new ProductResource(
                 $product->load([
                     'store',
-                    'category' => fn($q) => $q
+                    'category' => fn ($q) => $q
                         ->withTrashed()
                         ->select('id', 'name', 'slug'),
-                    'tags' => fn($q) => $q
+                    'tags' => fn ($q) => $q
                         ->withTrashed()
                         ->select('tags.id', 'tags.name', 'tags.slug'),
                 ])
@@ -92,10 +94,10 @@ class StoreProductController extends Controller
         return $this->success(new ProductResource(
             $store_product->load([
                 'store',
-                'category' => fn($q) => $q
+                'category' => fn ($q) => $q
                     ->withTrashed()
                     ->select('id', 'name', 'slug'),
-                'tags' => fn($q) => $q
+                'tags' => fn ($q) => $q
                     ->withTrashed()
                     ->select('tags.id', 'tags.name', 'tags.slug'),
             ])
@@ -124,15 +126,17 @@ class StoreProductController extends Controller
             return $store_product;
         });
 
+        Product::invalidateListingCache();
+
         return $this->updated(
             'Product',
             new ProductResource(
                 $product->load([
                     'store',
-                    'category' => fn($q) => $q
+                    'category' => fn ($q) => $q
                         ->withTrashed()
                         ->select('id', 'name', 'slug'),
-                    'tags' => fn($q) => $q
+                    'tags' => fn ($q) => $q
                         ->withTrashed()
                         ->select('tags.id', 'tags.name', 'tags.slug'),
                 ])
@@ -150,7 +154,7 @@ class StoreProductController extends Controller
         $sku = $store_product->sku;
         $store_product->delete();
 
-        return $this->deleted('Product', sprintf("Product with SKU: %s deleted successfully.", $sku));
+        return $this->deleted('Product', sprintf('Product with SKU: %s deleted successfully.', $sku));
     }
 
     /**
@@ -169,6 +173,6 @@ class StoreProductController extends Controller
         $sku = $store_product->sku;
         $store_product->restore();
 
-        return $this->restored('Product', sprintf("Product with SKU: %s restored successfully.", $sku));
+        return $this->restored('Product', sprintf('Product with SKU: %s restored successfully.', $sku));
     }
 }
