@@ -2,17 +2,18 @@
 
 namespace Tests\Feature\Services\Payment;
 
+use App\DataTransferObjects\PaymentEventResult;
 use App\Enum\OrderStatus;
 use App\Enum\PaymentOutcome;
 use App\Enum\PaymentStatus;
 use App\Enum\PaymentStatusTransition;
+use App\Events\OrderPaid;
 use App\Events\PaymentPaid;
 use App\Models\Order;
-use App\Models\Payment;
-use App\Services\Payment\PaymentStatusService;
-use App\DataTransferObjects\PaymentEventResult;
 use App\Models\OrderItem;
+use App\Models\Payment;
 use App\Models\Product;
+use App\Services\Payment\PaymentStatusService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Validation\ValidationException;
@@ -33,7 +34,7 @@ class PaymentStatusServiceTest extends TestCase
 
     public function test_pending_payment_can_transition_to_paid(): void
     {
-        Event::fake([PaymentPaid::class]);
+        Event::fake([PaymentPaid::class, OrderPaid::class]);
 
         $order = Order::factory()
             ->create([
@@ -72,6 +73,10 @@ class PaymentStatusServiceTest extends TestCase
 
         Event::assertDispatched(PaymentPaid::class, function (PaymentPaid $event) use ($payment): bool {
             return $event->paymentId === $payment->id;
+        });
+
+        Event::assertDispatched(OrderPaid::class, function (OrderPaid $event) use ($order): bool {
+            return $event->orderId === $order->id;
         });
     }
 
@@ -381,7 +386,7 @@ class PaymentStatusServiceTest extends TestCase
             order: $order,
             product: $productB,
             quantity: 3,
-        );;
+        );
 
         $payment = Payment::create([
             'order_id' => $order->id,
