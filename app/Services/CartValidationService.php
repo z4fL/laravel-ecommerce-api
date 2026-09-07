@@ -38,6 +38,7 @@ class CartValidationService
         $cart->loadMissing('cartItems.product');
 
         $cartItems = $cart->cartItems;
+        $result = $this->makeResult();
 
         if ($cartItems->isEmpty()) {
             $result['errors'][] = [
@@ -48,8 +49,6 @@ class CartValidationService
 
             return $result;
         }
-
-        $result = $this->makeResult();
 
         foreach ($cartItems as $cartItem) {
             $product = $cartItem->product;
