@@ -72,38 +72,42 @@ class InventoryService
         InventoryHistoryType $type,
         ?Order $order = null,
     ): void {
-        $lockedProduct = Product::query()
-            ->lockForUpdate()
-            ->findOrFail($product->getKey());
+        DB::transaction(function () use ($product, $quantity, $type, $order) {
+            $lockedProduct = Product::query()
+                ->lockForUpdate()
+                ->findOrFail($product->getKey());
 
-        $stockBefore = $lockedProduct->stock;
+            $stockBefore = $lockedProduct->stock;
 
-        if (
-            $type === InventoryHistoryType::DECREASE
-            && $stockBefore < $quantity
-        ) {
-            throw ValidationException::withMessages([
-                'stock' => 'Insufficient product stock.',
+            // usleep(500_000); // 0.5 detik, HAPUS setelah selesai verifikasi
+
+            if (
+                $type === InventoryHistoryType::DECREASE
+                && $stockBefore < $quantity
+            ) {
+                throw ValidationException::withMessages([
+                    'stock' => 'Insufficient product stock.',
+                ]);
+            }
+
+            $stockAfter = match ($type) {
+                InventoryHistoryType::DECREASE => $stockBefore - $quantity,
+                InventoryHistoryType::INCREASE => $stockBefore + $quantity,
+            };
+
+            $lockedProduct->update([
+                'stock' => $stockAfter,
             ]);
-        }
 
-        $stockAfter = match ($type) {
-            InventoryHistoryType::DECREASE => $stockBefore - $quantity,
-            InventoryHistoryType::INCREASE => $stockBefore + $quantity,
-        };
-
-        $lockedProduct->update([
-            'stock' => $stockAfter,
-        ]);
-
-        InventoryHistory::create([
-            'product_id' => $lockedProduct->getKey(),
-            'order_id' => $order?->getKey(),
-            'type' => $type,
-            'quantity' => $quantity,
-            'stock_before' => $stockBefore,
-            'stock_after' => $stockAfter,
-        ]);
+            InventoryHistory::create([
+                'product_id' => $lockedProduct->getKey(),
+                'order_id' => $order?->getKey(),
+                'type' => $type,
+                'quantity' => $quantity,
+                'stock_before' => $stockBefore,
+                'stock_after' => $stockAfter,
+            ]);
+        });
     }
 
     private function validateStock(int $stock): void
