@@ -287,7 +287,7 @@ describe('POST /store/products', function () {
     });
 
     it('guest cannot create product', function () {
-        auth()->logout();
+        $this->app['auth']->forgetGuards();
 
         $this->postJson($this->endpoint, [])
             ->assertUnauthorized();
