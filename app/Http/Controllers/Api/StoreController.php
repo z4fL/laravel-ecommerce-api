@@ -109,7 +109,14 @@ class StoreController extends Controller
      */
     public function me()
     {
-        //
+        $store = auth('api')->user()->store()->firstOrFail();
+
+        return $this->success(new StoreResource(
+            $store->load([
+                'user',
+                'products',
+            ])
+        ));
     }
 
     /**
@@ -117,7 +124,19 @@ class StoreController extends Controller
      */
     public function update(UpdateStoreRequest $request)
     {
-        //
+        $store = auth('api')->user()->store()->firstOrFail();
+
+        $store->update($request->safe()->all());
+
+        return $this->updated(
+            'Store',
+            new StoreResource(
+                $store->fresh()->load([
+                    'user',
+                    'products',
+                ])
+            )
+        );
     }
 
     /**
@@ -125,7 +144,11 @@ class StoreController extends Controller
      */
     public function destroy()
     {
-        //
+        $store = auth('api')->user()->store()->firstOrFail();
+        $store->delete();
+        Product::invalidateListingCache();
+
+        return $this->deleted('Store');
     }
 
     // SELLER END

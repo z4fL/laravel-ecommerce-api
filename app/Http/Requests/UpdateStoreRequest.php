@@ -12,7 +12,7 @@ class UpdateStoreRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -23,7 +23,9 @@ class UpdateStoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'name' => ['sometimes', 'string', 'min:3', 'max:50'],
+            'description' => ['sometimes', 'nullable', 'string', 'min:10', 'max:1000'],
+            'phone' => ['sometimes', 'nullable', 'string', 'max:20'],
         ];
     }
 }

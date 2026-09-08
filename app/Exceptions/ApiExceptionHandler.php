@@ -6,9 +6,6 @@ use App\Traits\ApiResponse;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
-use PHPOpenSourceSaver\JWTAuth\Exceptions\JWTException;
-use PHPOpenSourceSaver\JWTAuth\Exceptions\TokenExpiredException;
-use PHPOpenSourceSaver\JWTAuth\Exceptions\TokenInvalidException;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Throwable;
 
@@ -34,15 +31,6 @@ class ApiExceptionHandler
             // Unsupported gateway
             $exception instanceof UnsupportedPaymentGatewayException
             => $this->paymentGateway(),
-
-            $exception instanceof TokenExpiredException
-            => $this->jwt('Token expired.'),
-
-            $exception instanceof TokenInvalidException
-            => $this->jwt('Token invalid.'),
-
-            $exception instanceof JWTException
-            => $this->jwt('Authentication token error.'),
 
             // Fallback
             default
@@ -73,14 +61,6 @@ class ApiExceptionHandler
         return $this->error(
             message: 'Unsupported webhook gateway.',
             status: 400,
-        );
-    }
-
-    private function jwt(string $message): JsonResponse
-    {
-        return $this->error(
-            message: $message,
-            status: 401,
         );
     }
 

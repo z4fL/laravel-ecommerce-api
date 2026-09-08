@@ -187,12 +187,12 @@ return [
         */
         'securityDefinitions' => [
             'securitySchemes' => [
-                'BearerAuth' => [
-                    'type' => 'http',
-                    'description' => 'JWT Authorization header using the Bearer scheme.',
-                    'scheme' => 'bearer',
-                    'bearerFormat' => 'JWT',
-                ]
+                'sanctum' => [
+                    'type' => 'apiKey',
+                    'description' => 'Enter token in format (Bearer <token>)',
+                    'name' => 'Authorization',
+                    'in' => 'header',
+                ],
                 /*
                  * Examples of Security schemes
                  */
@@ -244,7 +244,7 @@ return [
                  * Examples of Securities
                  */
                 [
-                    'BearerAuth' => []
+                    'sanctum' => []
                     /*
                     'oauth2_security_example' => [
                         'read',
