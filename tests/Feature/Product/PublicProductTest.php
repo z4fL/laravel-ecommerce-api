@@ -2,6 +2,7 @@
 
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\ProductImage;
 use App\Models\Tag;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -15,6 +16,7 @@ beforeEach(function () {
 describe('product catalog', function () {
     it('returns only published products with their public relationships', function () {
         $published = Product::factory()->published()->create();
+        $images = ProductImage::factory()->count(2)->create(['product_id' => $published->id]);
         Product::factory()->draft()->create();
         $tag = Tag::factory()->create();
         $published->tags()->attach($tag);
@@ -26,7 +28,23 @@ describe('product catalog', function () {
             ->assertJsonPath('data.0.status', 'published')
             ->assertJsonPath('data.0.category.id', $published->category_id)
             ->assertJsonPath('data.0.tags.0.id', $tag->id)
+            ->assertJsonCount(2, 'data.0.images')
+            ->assertJsonPath('data.0.images.0.id', $images[0]->id)
             ->assertJsonStructure(['data', 'meta', 'links']);
+    });
+
+    it('includes images in the product detail and returns an empty image collection when none exist', function () {
+        $withImages = Product::factory()->published()->create();
+        ProductImage::factory()->count(2)->create(['product_id' => $withImages->id]);
+        $withoutImages = Product::factory()->published()->create();
+
+        $this->getJson($this->endpoint.'/'.$withImages->slug)
+            ->assertOk()
+            ->assertJsonCount(2, 'data.images');
+
+        $this->getJson($this->endpoint.'/'.$withoutImages->slug)
+            ->assertOk()
+            ->assertJsonPath('data.images', []);
     });
 
     it('supports search, category filtering, price filtering, stock filtering, and sorting', function () {

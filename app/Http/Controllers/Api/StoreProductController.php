@@ -36,6 +36,7 @@ class StoreProductController extends Controller
                 'tags' => fn ($q) => $q
                     ->withTrashed()
                     ->select('tags.id', 'tags.name', 'tags.slug'),
+                'images',
             ])
             ->search($search ?? null)
             ->filter($filters)
@@ -100,6 +101,7 @@ class StoreProductController extends Controller
                 'tags' => fn ($q) => $q
                     ->withTrashed()
                     ->select('tags.id', 'tags.name', 'tags.slug'),
+                'images',
             ])
         ));
     }

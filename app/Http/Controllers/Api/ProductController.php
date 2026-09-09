@@ -7,6 +7,7 @@ use App\Http\Requests\ProductIndexRequest;
 use App\Http\Resources\ProductResource;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\ProductImage;
 use App\Models\Store;
 use App\Models\Tag;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
@@ -41,6 +42,7 @@ class ProductController extends Controller
                     'store:id,name',
                     'category' => fn ($q) => $q->withTrashed()->select('id', 'name', 'slug'),
                     'tags' => fn ($q) => $q->withTrashed()->select('tags.id', 'tags.name', 'tags.slug'),
+                    'images',
                 ])
                 ->search($search ?? null)
                 ->filter($filters)
@@ -53,6 +55,7 @@ class ProductController extends Controller
                     'store' => $product->store?->getAttributes(),
                     'category' => $product->category?->getAttributes(),
                     'tags' => $product->tags->map(fn (Tag $tag) => $tag->getAttributes())->all(),
+                    'images' => $product->images->map(fn (ProductImage $image) => $image->getAttributes())->all(),
                 ])->all(),
                 'total' => $paginator->total(),
                 'per_page' => $paginator->perPage(),
@@ -71,6 +74,12 @@ class ProductController extends Controller
                     'tags',
                     new EloquentCollection(
                         collect($item['tags'])->map(fn (array $tag) => (new Tag)->newFromBuilder($tag))->all()
+                    )
+                );
+                $product->setRelation(
+                    'images',
+                    new EloquentCollection(
+                        collect($item['images'] ?? [])->map(fn (array $image) => (new ProductImage)->newFromBuilder($image))->all()
                     )
                 );
 
@@ -100,6 +109,7 @@ class ProductController extends Controller
             'store',
             'category' => fn ($q) => $q->withTrashed()->select('id', 'name', 'slug'),
             'tags' => fn ($q) => $q->withTrashed(),
+            'images',
         ]);
 
         return $this->success(new ProductResource($product));

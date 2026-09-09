@@ -7,6 +7,7 @@ use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Throwable;
 
 class ApiExceptionHandler
@@ -24,9 +25,13 @@ class ApiExceptionHandler
             $exception instanceof ValidationException
             => $this->validation($exception),
 
-            // Validation
+            // Auth
             $exception instanceof AuthenticationException
             => $this->unauthenticated(),
+
+            // Not Found
+            $exception instanceof NotFoundHttpException
+            => $this->notFound(),
 
             // Unsupported gateway
             $exception instanceof UnsupportedPaymentGatewayException
@@ -53,6 +58,14 @@ class ApiExceptionHandler
         return $this->error(
             message: 'Unauthenticated.',
             status: 401,
+        );
+    }
+
+    private function notFound(): JsonResponse
+    {
+        return $this->error(
+            message: 'Resource not found.',
+            status: 404,
         );
     }
 

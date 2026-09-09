@@ -20,7 +20,7 @@ class ProductImageFactory extends Factory
     {
         return [
             'product_id' => Product::factory(),
-            'path' => 'products/' . fake()->uuid() . '.jpg',
+            'path' => 'products/placeholder.jpg',
             'sort_order' => fake()->numberBetween(1, 10),
         ];
     }
@@ -28,7 +28,7 @@ class ProductImageFactory extends Factory
     public function image(): static
     {
         return $this->state(fn() => [
-            'path' => 'products/' . fake()->uuid() . '.jpg',
+            'path' => 'products/placeholder.jpg',
         ]);
     }
 }

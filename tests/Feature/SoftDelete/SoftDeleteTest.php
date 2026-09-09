@@ -2,13 +2,122 @@
 
 use App\Enum\ProductStatus;
 use App\Models\Category;
+use App\Models\Order;
 use App\Models\Product;
 use App\Models\Store;
 use App\Models\Tag;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 
 uses(RefreshDatabase::class);
+
+describe('User soft delete flow', function () {
+    it('soft deletes the account and keeps it in the database', function () {
+        $user = User::factory()->create([
+            'password' => Hash::make('Password123!'),
+        ]);
+        $token = $user->createToken('api-token')->plainTextToken;
+
+        $this->withToken($token)->deleteJson('/api/v1/me')->assertOk();
+
+        $this->assertSoftDeleted('users', ['id' => $user->id]);
+        expect(User::withTrashed()->find($user->id))->not->toBeNull();
+        $this->app['auth']->forgetGuards();
+        $this->withToken($token)->getJson('/api/v1/me')->assertUnauthorized();
+    });
+
+    it('does not authenticate a soft deleted user', function () {
+        $user = User::factory()->create([
+            'email' => 'deleted@example.com',
+            'password' => Hash::make('Password123!'),
+        ]);
+        $user->delete();
+
+        $this->postJson('/api/v1/auth/login', [
+            'email' => 'deleted@example.com',
+            'password' => 'Password123!',
+        ])->assertUnauthorized();
+    });
+
+    it('excludes soft deleted users from active queries', function () {
+        $user = User::factory()->create();
+        $user->delete();
+
+        expect(User::query()->find($user->id))->toBeNull()
+            ->and(User::withTrashed()->find($user->id))->not->toBeNull();
+    });
+
+    it('allows an email to be reused after soft delete but rejects active duplicates', function () {
+        $deleted = User::factory()->create(['email' => 'reusable@example.com']);
+        $deleted->delete();
+
+        $this->postJson('/api/v1/auth/register', [
+            'name' => 'Replacement User',
+            'username' => 'replacement-user',
+            'email' => 'reusable@example.com',
+            'password' => 'Password123!',
+            'password_confirmation' => 'Password123!',
+            'phone' => '085222555111',
+        ])->assertCreated();
+
+        $this->postJson('/api/v1/auth/register', [
+            'name' => 'Duplicate User',
+            'username' => 'duplicate-user',
+            'email' => 'reusable@example.com',
+            'password' => 'Password123!',
+            'password_confirmation' => 'Password123!',
+            'phone' => '085222555112',
+        ])->assertUnprocessable()->assertJsonValidationErrors(['email']);
+    });
+
+    it('rejects restoring a user when an active user owns the email', function () {
+        $admin = User::factory()->admin()->create();
+        $deleted = User::factory()->create(['email' => 'restore@example.com']);
+        $deleted->delete();
+        User::factory()->create(['email' => 'restore@example.com']);
+
+        $this->actingAs($admin, 'api')
+            ->postJson("/api/v1/users/{$deleted->id}/restore")
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['email']);
+    });
+
+    it('restores a user when the email is available', function () {
+        $admin = User::factory()->admin()->create();
+        $user = User::factory()->create();
+        $user->delete();
+
+        $this->actingAs($admin, 'api')
+            ->postJson("/api/v1/users/{$user->id}/restore")
+            ->assertOk();
+
+        $this->assertDatabaseHas('users', [
+            'id' => $user->id,
+            'deleted_at' => null,
+        ]);
+    });
+
+    it('keeps historical orders and payments after account deletion', function () {
+        $user = User::factory()->create();
+        $order = Order::factory()->create(['user_id' => $user->id]);
+        DB::table('payments')->insert([
+            'order_id' => $order->id,
+            'gateway' => 'test',
+            'gateway_order_id' => 'test-' . $order->id,
+            'status' => 'pending',
+            'amount' => $order->total,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $user->delete();
+
+        $this->assertDatabaseHas('orders', ['id' => $order->id, 'user_id' => $user->id]);
+        $this->assertDatabaseHas('payments', ['order_id' => $order->id]);
+    });
+});
 
 describe('Category soft delete flow', function () {
     beforeEach(function () {

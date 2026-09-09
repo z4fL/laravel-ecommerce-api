@@ -6,6 +6,7 @@ use App\Enum\ProductStatus;
 use App\Enum\UserRole;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\ProductImage;
 use App\Models\Tag;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -44,6 +45,10 @@ class ProductSeeder extends Seeder
             'stock' => 10
         ]);
 
+        ProductImage::factory()
+            ->for($keyboard)
+            ->create();
+
         $keyboard->tags()->sync([
             $gaming->id,
             $rgb->id,
@@ -61,6 +66,10 @@ class ProductSeeder extends Seeder
             'status' => ProductStatus::PUBLISHED,
             'stock' => 10
         ]);
+
+        ProductImage::factory()
+            ->for($mouse)
+            ->create();
 
         $mouse->tags()->sync([
             $wireless->id,
@@ -80,6 +89,10 @@ class ProductSeeder extends Seeder
             'stock' => 10
         ]);
 
+        ProductImage::factory()
+            ->for($book)
+            ->create();
+
         $book->tags()->sync([
             $programming->id,
             $bestseller->id,
@@ -97,10 +110,13 @@ class ProductSeeder extends Seeder
             'stock' => 10
         ]);
 
+        ProductImage::factory()
+            ->for($headphones)
+            ->create();
+
         $headphones->tags()->sync([
             $wireless->id,
             $ergonomic->id,
         ]);
-
     }
 }

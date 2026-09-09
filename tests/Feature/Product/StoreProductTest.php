@@ -3,6 +3,7 @@
 use App\Enum\ProductStatus;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\ProductImage;
 use App\Models\Store;
 use App\Models\Tag;
 use App\Models\User;
@@ -32,13 +33,29 @@ function productPayload(array $overrides = []): array
 
 describe('seller product listing', function () {
     it('lists only the authenticated seller products, including drafts', function () {
-        Product::factory()->published()->create(['store_id' => $this->store->id]);
+        $product = Product::factory()->published()->create(['store_id' => $this->store->id]);
+        ProductImage::factory()->count(2)->create(['product_id' => $product->id]);
         Product::factory()->draft()->create(['store_id' => $this->store->id]);
         Product::factory()->create();
 
         $this->getJson($this->endpoint)
             ->assertOk()
-            ->assertJsonCount(2, 'data');
+            ->assertJsonCount(2, 'data')
+            ->assertJsonCount(2, 'data.0.images');
+    });
+
+    it('includes images in the seller product detail and returns an empty image collection when none exist', function () {
+        $withImages = Product::factory()->create(['store_id' => $this->store->id]);
+        ProductImage::factory()->count(2)->create(['product_id' => $withImages->id]);
+        $withoutImages = Product::factory()->create(['store_id' => $this->store->id]);
+
+        $this->getJson($this->endpoint.'/'.$withImages->slug)
+            ->assertOk()
+            ->assertJsonCount(2, 'data.images');
+
+        $this->getJson($this->endpoint.'/'.$withoutImages->slug)
+            ->assertOk()
+            ->assertJsonPath('data.images', []);
     });
 
     it('supports seller listing search, filters, sorting, and pagination within ownership', function () {
