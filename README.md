@@ -13,7 +13,6 @@ A production inspired RESTful API built with Laravel for learning, backend portf
 ![Pest](https://img.shields.io/badge/Pest-Testing-366488?style=for-the-badge&logo=phpunit&logoColor=white)
 ![License](https://img.shields.io/badge/MIT-green?style=for-the-badge)
 
-
 ## About
 
 This project is a production inspired RESTful API for an E Commerce application built using Laravel.
@@ -21,7 +20,6 @@ This project is a production inspired RESTful API for an E Commerce application 
 The primary goal is to practice backend software engineering by applying RESTful API design, authentication, authorization, clean architecture, testing, documentation, and development workflows commonly used in real world projects.
 
 This project is developed incrementally using GitHub Issues and Milestones, where each issue represents a single unit of work.
-
 
 ## Features
 
@@ -42,11 +40,10 @@ Current and planned features include:
 * Structured Logging
 * Automated Testing
 
-
 ## Tech Stack
 
 | Technology | Description |
-|------------|-------------|
+| ------------ | ------------- |
 | Laravel 13 | PHP Framework |
 | PHP | Programming Language |
 | PostgreSQL | Primary Database |
@@ -56,19 +53,17 @@ Current and planned features include:
 | Pest | Automated Testing |
 | GitHub Actions | Continuous Integration |
 
-
 ## Requirements
 
 The versions and services below are required by the repository configuration:
 
 | Requirement | Version / configuration | Tested with |
-|-------------|-------------------------|--------------|
+| ------------- | ------------------------- | -------------- |
 | PHP | `^8.5` | 8.5.x |
 | Composer | Not pinned by repo | 2.10 |
 | PostgreSQL | Required by `.env.example` & test config, not pinned | 18.3 |
 | Redis | Required by `QUEUE_CONNECTION=redis` & `CACHE_STORE=redis`, not pinned | 8.10 |
-
-
+| Node.js | Required to run openapi-to-postmanv2 for regenerating the Postman collection | 24.15 |
 
 ## Installation
 
@@ -125,10 +120,9 @@ php artisan serve
 
 The application will be available at:
 
-```
+```url
 http://localhost:8000
 ```
-
 
 ## API Documentation
 
@@ -142,9 +136,27 @@ php artisan l5-swagger:generate
 
 Open the documentation in your browser.
 
-```
+```url
 http://localhost:8000/api/documentation
 ```
+
+### Postman Collection
+
+The OpenAPI specification can be converted into a Postman collection using `openapi-to-postmanv2`.
+
+Install the Node dependencies.
+
+```​bash
+npm install
+```
+
+Generate the Postman collection.
+
+```bash
+sh ./postman/regenerate.sh
+```
+
+This creates `collection.json` and `environment.json` in the postman folder for import into Postman.
 
 ## Testing
 
@@ -173,34 +185,34 @@ Register a customer:
 
 ```bash
 curl -X POST http://localhost:8000/api/v1/auth/register \
-	-H "Content-Type: application/json" \
-	-d '{
-		"name": "John Doe",
-		"username": "john-doe",
-		"email": "john@example.com",
-		"password": "Password123!",
-		"password_confirmation": "Password123!",
-		"phone": "085222555111"
-	}'
+ -H "Content-Type: application/json" \
+ -d '{
+  "name": "John Doe",
+  "username": "john-doe",
+  "email": "john@example.com",
+  "password": "Password123!",
+  "password_confirmation": "Password123!",
+  "phone": "085222555111"
+ }'
 ```
 
 The successful response has HTTP `201` and returns the token in `data.access_token`:
 
 ```json
 {
-	"success": true,
-	"message": "User created successfully.",
-	"data": {
-		"user": {
-			"id": 1,
-			"name": "John Doe",
-			"username": "john-doe",
-			"email": "john@example.com",
-			"created_at": "..."
-		},
-		"access_token": "...",
-		"token_type": "Bearer"
-	}
+ "success": true,
+ "message": "User created successfully.",
+ "data": {
+  "user": {
+   "id": 1,
+   "name": "John Doe",
+   "username": "john-doe",
+   "email": "john@example.com",
+   "created_at": "..."
+  },
+  "access_token": "...",
+  "token_type": "Bearer"
+ }
 }
 ```
 
@@ -214,43 +226,42 @@ The response contains product data and pagination metadata:
 
 ```json
 {
-	"success": true,
-	"message": "Request completed successfully.",
-	"data": [
-		{
-			"id": 1,
-			"sku": "...",
-			"name": "...",
-			"slug": "...",
-			"description": "...",
-			"price": "...",
-			"status": "published",
-			"stock": 1,
-			"store": {},
-			"category": {},
-			"tags": [],
-			"images": []
-		}
-	],
-	"meta": {
-		"total": 1,
-		"per_page": 1,
-		"current_page": 1,
-		"last_page": 1,
-		"count": 1,
-		"from": 1,
-		"to": 1
-	},
-	"links": {
-		"first": "...",
-		"last": "...",
-		"prev": null,
-		"next": null,
-		"path": "http://localhost:8000/api/v1/products"
-	}
+ "success": true,
+ "message": "Request completed successfully.",
+ "data": [
+  {
+   "id": 1,
+   "sku": "...",
+   "name": "...",
+   "slug": "...",
+   "description": "...",
+   "price": "...",
+   "status": "published",
+   "stock": 1,
+   "store": {},
+   "category": {},
+   "tags": [],
+   "images": []
+  }
+ ],
+ "meta": {
+  "total": 1,
+  "per_page": 1,
+  "current_page": 1,
+  "last_page": 1,
+  "count": 1,
+  "from": 1,
+  "to": 1
+ },
+ "links": {
+  "first": "...",
+  "last": "...",
+  "prev": null,
+  "next": null,
+  "path": "http://localhost:8000/api/v1/products"
+ }
 }
 ```
-
 
 ## Contributing
 
@@ -265,7 +276,6 @@ This project is developed incrementally using GitHub Issues and Milestones. Trea
 php artisan test
 ./vendor/bin/pint --test
 ```
-
 
 ## License
 
