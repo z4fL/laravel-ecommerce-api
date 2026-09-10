@@ -94,50 +94,85 @@ const refinedCollection = {
 // Organize endpoints by role
 const byRole = {
     'Public (No Auth)': [],
-    'Authentication': [],
     'Customers (Verified)': [],
     'Sellers (Role: seller,admin + Verified)': [],
     'Admin (Role: admin)': []
 };
 
-// Function to categorize requests
+// Function to categorize requests.
+//
+// Rewritten against the actual route files (routes/api/v1/public.php,
+// protected.php, seller.php) and RoleMiddleware.php instead of loose
+// heuristics — every branch below maps 1:1 to a real middleware group.
 function categorizeRequest(item) {
     const path = item.request?.url?.path || [];
     const pathStr = path.join('/');
     const method = item.request?.method || '';
 
-    // Authentication endpoints
-    if (pathStr.includes('auth/register') || pathStr.includes('auth/login') || 
-        pathStr.includes('auth/forgot-password') || pathStr.includes('auth/reset-password') ||
-        pathStr.includes('auth/logout') || pathStr.includes('auth/email')) {
-        return 'Authentication';
+    // --- Fully public / guest — no auth:api middleware at all (public.php) ---
+    if (pathStr === 'auth/register' || pathStr === 'auth/login' ||
+        pathStr === 'auth/forgot-password' || pathStr === 'auth/reset-password') {
+        return 'Public (No Auth)';
     }
-
-    // Public endpoints (no auth needed)
-    if (method === 'GET' && (pathStr.includes('categories') || pathStr.includes('tags') || 
-        pathStr.includes('products') || pathStr.includes('stores'))) {
+    // Signed URL, not a Bearer token — the link is clicked from an email,
+    // often before the user has ever logged in.
+    if (pathStr.startsWith('email/verify/')) {
+        return 'Public (No Auth)';
+    }
+    if (pathStr.startsWith('webhook')) {
+        return 'Public (No Auth)';
+    }
+    if (method === 'GET' && (pathStr.startsWith('categories') || pathStr.startsWith('tags') ||
+        pathStr.startsWith('products') || pathStr.startsWith('stores'))) {
         return 'Public (No Auth)';
     }
 
-    // Webhook
-    if (pathStr.includes('webhook')) {
-        return 'Public (No Auth)';
+    // --- auth:api only, no role / no 'verified' (protected.php top group) ---
+    // Any authenticated user can call these regardless of role or
+    // verification status, so a customer_token is a valid, representative
+    // token for testing — they're grouped under Customers for that reason.
+    if (pathStr === 'auth/logout' || pathStr === 'auth/email/verification-notification') {
+        return 'Customers (Verified)';
     }
 
-    // Seller endpoints (store management, product management)
+    // --- role:admin (protected.php) ---
+    if ((method === 'POST' || method === 'PUT' || method === 'PATCH' || method === 'DELETE') &&
+        (pathStr.startsWith('categories') || pathStr.startsWith('tags'))) {
+        return 'Admin (Role: admin)';
+    }
+    if (pathStr.startsWith('users/')) {
+        return 'Admin (Role: admin)';
+    }
+
+    // --- role:seller,admin (seller.php) ---
+    // Bare "store" (get/update/delete one's OWN store) has no trailing path
+    // segment, so it needs an exact match separate from the "store/..."
+    // prefix used for product/image/stock management underneath it.
+    // POST /store (create a store) is deliberately excluded here — that
+    // route lives in protected.php with NO role requirement, so it falls
+    // through to the customer bucket below.
+    if (pathStr === 'store' && method !== 'POST') {
+        return 'Sellers (Role: seller,admin + Verified)';
+    }
     if (pathStr.startsWith('store/')) {
         return 'Sellers (Role: seller,admin + Verified)';
     }
 
-    // Admin endpoints
-    if ((method === 'POST' || method === 'PATCH' || method === 'DELETE') && 
-        (pathStr.includes('categories') || pathStr.includes('tags'))) {
-        return 'Admin (Role: admin)';
-    }
-
-    // Customer endpoints
+    // --- auth:api + verified, no specific role (protected.php nested group,
+    // and the separate cart group) — cart, checkout, orders,
+    // shipping-addresses, me, and POST /store (create own store) ---
     return 'Customers (Verified)';
 }
+
+// Paths under the "Customers (Verified)" bucket that only need auth:api
+// (any authenticated user) and do NOT actually require the 'verified'
+// middleware — see protected.php's top-level group vs the nested
+// ->middleware('verified') group. Declared up front since it's used by
+// addAuthRequirements() during the main processing loop below.
+const CUSTOMER_NO_VERIFIED_REQUIRED = new Set([
+    'auth/logout',
+    'auth/email/verification-notification',
+]);
 
 // Process all items from raw collection
 function processItems(items) {
@@ -202,7 +237,8 @@ for (const [role, requests] of Object.entries(byRole)) {
             if (typeof request.request.description === 'string') {
                 request.request.description = { content: request.request.description, type: 'text/plain' };
             }
-            request.request.description.content = addAuthRequirements(role, request.request.description.content || '');
+            const reqPathStr = (request.request?.url?.path || []).join('/');
+            request.request.description.content = addAuthRequirements(role, reqPathStr, request.request.description.content || '');
 
             domainFolder.item.push(request);
         }
@@ -279,8 +315,7 @@ console.log(`✅ Environment template written to: ${envPath}`);
 function getRoleDescription(role) {
     const descriptions = {
         'Public (No Auth)': 'Public endpoints - no authentication required',
-        'Authentication': 'User authentication endpoints (register, login, logout, password reset)',
-        'Customers (Verified)': 'Customer endpoints - requires verified email and authentication',
+        'Customers (Verified)': 'Customer endpoints - requires authentication (some also require verified email; see per-request notes)',
         'Sellers (Role: seller,admin + Verified)': 'Seller endpoints - requires seller/admin role and verified email',
         'Admin (Role: admin)': 'Admin-only endpoints - requires admin role'
     };
@@ -312,11 +347,13 @@ function formatDomain(domain) {
     return map[domain] || domain.charAt(0).toUpperCase() + domain.slice(1);
 }
 
-function addAuthRequirements(role, existing) {
+function addAuthRequirements(role, pathStr, existing) {
     if (role === 'Public (No Auth)') return existing;
-    if (role === 'Authentication') return existing;
     if (role === 'Customers (Verified)') {
-        return (existing ? existing + '\n\n' : '') + '**Auth:** Requires verified customer token\n**Verification:** Email must be verified';
+        if (CUSTOMER_NO_VERIFIED_REQUIRED.has(pathStr)) {
+            return (existing ? existing + '\n\n' : '') + '**Auth:** Requires an authenticated user token (any role, verified or not)';
+        }
+        return (existing ? existing + '\n\n' : '') + '**Auth:** Requires customer token\n**Verification:** Email must be verified';
     }
     if (role === 'Sellers (Role: seller,admin + Verified)') {
         return (existing ? existing + '\n\n' : '') + '**Auth:** Requires seller or admin token\n**Verification:** Email must be verified';
