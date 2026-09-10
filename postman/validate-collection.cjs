@@ -94,7 +94,6 @@ console.log('🔍 Validating Postman Collection...\n');
 // Collection structure
 if (!collection.info) errors.push('Collection missing info section');
 if (!collection.item || !Array.isArray(collection.item)) errors.push('Collection missing item array');
-if (!collection.variable || !Array.isArray(collection.variable)) warnings.push('Collection missing variable array');
 
 // Environment structure
 if (!environment.values || !Array.isArray(environment.values)) errors.push('Environment missing values array');
@@ -106,14 +105,6 @@ const envVarNames = environment.values?.map(v => v.key) || [];
 for (const varName of requiredVars) {
     if (!envVarNames.includes(varName)) {
         errors.push(`Environment missing required variable: ${varName}`);
-    }
-}
-
-// Check collection variables
-const collVarNames = collection.variable?.map(v => v.key) || [];
-for (const varName of requiredVars) {
-    if (!collVarNames.includes(varName)) {
-        warnings.push(`Collection missing variable: ${varName}`);
     }
 }
 

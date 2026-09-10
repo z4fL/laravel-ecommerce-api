@@ -50,43 +50,6 @@ const refinedCollection = {
         description: 'REST API for E Commerce Portfolio Project - Postman Collection',
         schema: 'https://schema.getpostman.com/json/collection/v2.1.0/collection.json'
     },
-    variable: [
-        {
-            key: 'baseUrl',
-            value: 'http://localhost:8000/api/v1',
-            type: 'string'
-        },
-        {
-            key: 'customer_token',
-            value: '',
-            type: 'string'
-        },
-        {
-            key: 'seller_token',
-            value: '',
-            type: 'string'
-        },
-        {
-            key: 'admin_token',
-            value: '',
-            type: 'string'
-        },
-        {
-            key: 'product_id',
-            value: '',
-            type: 'string'
-        },
-        {
-            key: 'order_id',
-            value: '',
-            type: 'string'
-        },
-        {
-            key: 'store_id',
-            value: '',
-            type: 'string'
-        }
-    ],
     item: [],
     auth: null
 };
@@ -208,7 +171,7 @@ for (const [role, requests] of Object.entries(byRole)) {
     for (const request of requests) {
         const path = request.request?.url?.path || [];
         const domain = path[0] || 'Other';
-        
+
         if (!byDomain[domain]) {
             byDomain[domain] = [];
         }
