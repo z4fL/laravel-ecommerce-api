@@ -1,0 +1,51 @@
+{
+  "id": "ecommerce-api-env",
+  "name": "E-commerce API Environment",
+  "values": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8000/api/v1",
+      "enabled": true,
+      "type": "string"
+    },
+    {
+      "key": "customer_token",
+      "value": "",
+      "enabled": true,
+      "type": "string"
+    },
+    {
+      "key": "seller_token",
+      "value": "",
+      "enabled": true,
+      "type": "string"
+    },
+    {
+      "key": "admin_token",
+      "value": "",
+      "enabled": true,
+      "type": "string"
+    },
+    {
+      "key": "product_id",
+      "value": "",
+      "enabled": true,
+      "type": "string"
+    },
+    {
+      "key": "order_id",
+      "value": "",
+      "enabled": true,
+      "type": "string"
+    },
+    {
+      "key": "store_id",
+      "value": "",
+      "enabled": true,
+      "type": "string"
+    }
+  ],
+  "_postman_variable_scope": "environment",
+  "_postman_exported_at": "2026-09-10T04:36:03.664Z",
+  "_postman_exported_using": "Postman/11.0.0"
+}

@@ -1,0 +1,32 @@
+# Postman Collection - Git Ignore
+# Exclude files that contain sensitive data or are generated
+
+# Generated collection (raw)
+collection_raw.json
+
+# Environment with tokens (never commit real tokens)
+# Use environment.json as a template only
+*.env.postman
+environment.production.json
+environment.local.json
+
+# Postman generated files
+.postman_test_run
+*.postman_environment
+*.postman_collection
+
+# Temporary files from scripts
+*.tmp
+*.log
+
+# Node modules (if any local scripts)
+node_modules/
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# OS-specific files
+.DS_Store
+Thumbs.db
