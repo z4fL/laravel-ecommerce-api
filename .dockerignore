@@ -4,6 +4,7 @@
 .env.*
 !.env.example
 !.env.docker.example
+!.env.docker.production.example
 node_modules
 vendor
 storage/logs/*
@@ -11,7 +12,10 @@ storage/framework/cache/*
 storage/framework/sessions/*
 storage/framework/views/*
 tests
+postman
 Dockerfile
+compose*.yaml
+compose*.yml
 docker-compose*.yml
 *.md
 .idea

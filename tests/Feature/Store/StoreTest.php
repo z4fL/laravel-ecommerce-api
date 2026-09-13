@@ -33,7 +33,7 @@ describe('current seller store', function () {
             ->assertNotFound()
             ->assertExactJson([
                 'success' => false,
-                'message' => 'Not Found',
+                'message' => 'Resource not found.',
                 'data' => null,
             ]);
     });

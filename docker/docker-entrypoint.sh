@@ -7,6 +7,11 @@ set -e
 # at build time in the Dockerfile.
 chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
+if [ "$APP_ENV" = "production" ]; then
+    php artisan optimize:clear
+    php artisan optimize
+fi
+
 # Deliberately NOT running migrations, key:generate, or storage:link here.
 # Those are deployment-time actions, not container-startup actions — baking
 # them into the entrypoint risks race conditions if this image is ever

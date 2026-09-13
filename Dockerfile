@@ -54,16 +54,24 @@ RUN apk add --no-cache --virtual .build-deps \
         postgresql-dev \
         oniguruma-dev \
         curl-dev \
+	    libpng-dev \
+        libjpeg-turbo-dev \
+        freetype-dev \
     && apk add --no-cache \
         postgresql-libs \
         curl \
+        libpng \
+        libjpeg-turbo \
+        freetype \
     && docker-php-ext-install pdo_pgsql \
     && docker-php-ext-install mbstring \
     && docker-php-ext-install curl \
     && docker-php-ext-install pcntl \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install gd \
     && curl -fsSL -o /usr/local/bin/pie https://github.com/php/pie/releases/latest/download/pie.phar \
     && chmod +x /usr/local/bin/pie \
-    && pie install phpredis/phpredis \
+    && pie install phpredis/phpredis:^6.3 \
     && rm -f /usr/local/bin/pie \
     && apk del .build-deps \
     && rm -rf /tmp/pear /var/cache/apk/*
@@ -75,6 +83,8 @@ RUN { \
         echo 'opcache.enable=1'; \
         echo 'opcache.memory_consumption=128'; \
         echo 'opcache.max_accelerated_files=10000'; \
+        echo 'opcache.validate_timestamps=0'; \
+        echo 'opcache.interned_strings_buffer=16'; \
     } > /usr/local/etc/php/conf.d/opcache-baseline.ini
 
 # Bring in vendor/ and the application code already assembled in the
