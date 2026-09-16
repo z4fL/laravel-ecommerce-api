@@ -27,7 +27,7 @@ class ProductImageController extends Controller
     {
         Gate::authorize('update', $store_product);
 
-        $imagePath = Storage::disk('public')->putFile('products', $request->safe()->file('image'));
+        $imagePath = Storage::disk('s3')->putFile('products', $request->safe()->file('image'));
 
         try {
             $image = DB::transaction(function () use ($store_product, $imagePath) {
@@ -41,7 +41,7 @@ class ProductImageController extends Controller
                 ]);
             });
         } catch (\Throwable $th) {
-            Storage::disk('public')->delete($imagePath);
+            Storage::disk('s3')->delete($imagePath);
 
             throw $th;
         }
@@ -60,7 +60,7 @@ class ProductImageController extends Controller
             $store_product->reorderImages();
         });
 
-        Storage::disk('public')->delete($oldPath);
+        Storage::disk('s3')->delete($oldPath);
 
         return $this->deleted('Product Image');
     }

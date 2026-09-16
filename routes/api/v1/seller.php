@@ -19,7 +19,8 @@ Route::middleware(['auth:api', 'role:seller,admin', 'verified'])
             ]);
         Route::post('/products/{restore_product}/restore', [StoreProductController::class, 'restore']);
 
-        Route::post('/products/{store_product}/images', [ProductImageController::class, 'store']);
+        Route::post('/products/{store_product}/images', [ProductImageController::class, 'store'])
+            ->middleware('throttle:product-image-upload');
         Route::patch('/products/{store_product}/images/reorder', [ProductImageController::class, 'reorder']);
         Route::delete('/products/{store_product}/images/{image}', [ProductImageController::class, 'destroy'])
             ->scopeBindings();

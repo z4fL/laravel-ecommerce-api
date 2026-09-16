@@ -7,8 +7,12 @@ use App\Contracts\PaymentWebhookInterface;
 use App\PaymentGateways\MidtransGateway;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Foundation\Events\DiagnosingHealth;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\ServiceProvider;
 use InvalidArgumentException;
 
@@ -38,6 +42,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Event::listen(DiagnosingHealth::class, static function (): void {
+            DB::select('select 1');
+            Redis::connection()->ping('PONG');
+        });
+
         RateLimiter::for('api', function (Request $request) {
             return Limit::perMinute(120)->by(
                 $request->user()?->getAuthIdentifier() ?? $request->ip()
@@ -71,5 +80,10 @@ class AppServiceProvider extends ServiceProvider
                 'email-verification:'.($request->user()?->getAuthIdentifier() ?? $request->ip())
             )
         );
+
+        RateLimiter::for('product-image-upload', function (Request $request) {
+            return Limit::perMinute(10)
+                ->by($request->user()->id);
+        });
     }
 }
