@@ -1,0 +1,170 @@
+services:
+  - type: web
+    name: laravel-ecommerce-api
+    runtime: docker
+    dockerfilePath: docker/render/Dockerfile
+    dockerContext: .
+    plan: free
+    healthCheckPath: /up
+    region: singapore # matches Neon (ap-southeast-1) and R2 (apac)
+
+    envVars:
+      # Render sets PORT automatically (default 10000), but it's pinned
+      # here explicitly since nginx.conf hardcodes `listen 10000;` rather
+      # than reading $PORT dynamically.
+      - key: PORT
+        value: 10000
+
+      # Self-reference: exposes this service's own public URL as APP_URL,
+      # so Laravel generates correct absolute links without hardcoding
+      # the onrender.com subdomain by hand.
+      - key: APP_URL
+        fromService:
+          name: laravel-ecommerce-api
+          type: web
+          envVarKey: RENDER_EXTERNAL_URL
+
+      - key: APP_NAME
+        value: "E-commerce API Headless"
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_TIMEZONE
+        value: Asia/Jakarta
+      - key: APP_LOCALE
+        value: en
+      - key: APP_FALLBACK_LOCALE
+        value: en
+      - key: APP_FAKER_LOCALE
+        value: en_US
+      - key: APP_MAINTENANCE_DRIVER
+        value: file
+
+      - key: AUTH_GUARD
+        value: api
+      - key: AUTH_PASSWORD_BROKER
+        value: users
+      - key: AUTH_PASSWORD_RESET_TOKEN_TABLE
+        value: password_reset_tokens
+
+      - key: BCRYPT_ROUNDS
+        value: "12"
+
+      - key: LOG_CHANNEL
+        value: stack
+      - key: LOG_STACK
+        value: daily
+      - key: LOG_DEPRECATIONS_CHANNEL
+        value: "null"
+      - key: LOG_LEVEL
+        value: info
+      - key: LOG_DAILY_DAYS
+        value: "14"
+
+      # --- Neon (Postgres) ---
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_HOST
+        value: ep-shy-fire-b33ifp5k-pooler.c-4.ap-southeast-1.aws.neon.tech
+      - key: DB_PORT
+        value: "5432"
+      - key: DB_DATABASE
+        value: laravel_ecommerce_api
+      - key: DB_USERNAME
+        value: neondb_owner
+      - key: DB_SSLMODE
+        value: require
+
+      - key: SESSION_DRIVER
+        value: database
+      - key: SESSION_LIFETIME
+        value: "120"
+      - key: SESSION_ENCRYPT
+        value: "false"
+      - key: SESSION_PATH
+        value: /
+      - key: SESSION_DOMAIN
+        value: "null"
+
+      - key: BROADCAST_CONNECTION
+        value: log
+      - key: FILESYSTEM_DISK
+        value: s3
+      - key: QUEUE_CONNECTION
+        value: sync
+
+      # --- Upstash (Redis) ---
+      - key: CACHE_STORE
+        value: redis
+      - key: REDIS_CACHE_DB
+        value: "0"
+      - key: REDIS_CLIENT
+        value: phpredis
+      - key: REDIS_HOST
+        value: "tls://enabling-doberman-78521.upstash.io"
+      - key: REDIS_PORT
+        value: "6379"
+
+      # --- Resend (SMTP) ---
+      - key: MAIL_MAILER
+        value: smtp
+      - key: MAIL_HOST
+        value: smtp.resend.com
+      - key: MAIL_PORT
+        value: "587"
+      - key: MAIL_USERNAME
+        value: resend
+      - key: MAIL_ENCRYPTION
+        value: tls
+      - key: MAIL_FROM_ADDRESS
+        value: onboarding@resend.dev
+      - key: MAIL_FROM_NAME
+        value: Z4FL
+
+      # --- Cloudflare R2 (S3-compatible storage) ---
+      - key: AWS_DEFAULT_REGION
+        value: auto
+      - key: AWS_URL
+        value: https://pub-4199a9f7d7c1457d9aef57ec72f3b4ca.r2.dev
+      - key: AWS_ENDPOINT
+        value: https://4f8256e425646c4b7a8c9f88acfdb0c5.r2.cloudflarestorage.com
+      - key: AWS_BUCKET
+        value: laravel-ecommerce-uploads
+      - key: AWS_USE_PATH_STYLE_ENDPOINT
+        value: "false"
+
+      - key: L5_SWAGGER_GENERATE_ALWAYS
+        value: "false"
+
+      - key: PAYMENT_DRIVER
+        value: midtrans
+      - key: MIDTRANS_IS_PRODUCTION
+        value: "true"
+      - key: MIDTRANS_IS_SANITIZED
+        value: "true"
+      - key: MIDTRANS_IS_3DS
+        value: "true"
+
+      # --- Secrets: NOT hardcoded, Render prompts for these once during
+      # Blueprint creation. Existing services keep their current value on
+      # every later sync (see Blueprint docs: "Render ignores sync: false
+      # vars when updating an existing Blueprint").
+      - key: APP_KEY
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: REDIS_PASSWORD
+        sync: false
+      - key: MAIL_PASSWORD
+        sync: false
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: MIDTRANS_SERVER_KEY
+        sync: false
+      - key: MIDTRANS_CLIENT_KEY
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
